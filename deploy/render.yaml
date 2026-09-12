@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: universal-ai-gateway
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENCRYPTION_KEYS
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: REGISTRATION_CODE
+        sync: false

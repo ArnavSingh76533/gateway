@@ -1,0 +1,41 @@
+name: Gateway checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -r backend/requirements.lock -e './backend[dev]' -e ./sdk/python
+      - run: ruff check backend/app backend/tests
+      - run: mypy backend/app
+      - run: pytest backend/tests -q
+      - run: DATABASE_URL=sqlite+aiosqlite:///./migration-test.db python -m alembic -c backend/alembic.ini upgrade head
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24', cache: npm, cache-dependency-path: frontend/package-lock.json}
+      - run: npm ci && npm run build
+        working-directory: frontend
+      - run: npm ci && npm run build
+        working-directory: sdk/node
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t gateway-test .
+      - name: Test rootless embedded services
+        run: |
+          KEY=$(python -c 'import base64,secrets;print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())')
+          docker run -d --name gateway-ci -p 7860:7860 -e ENCRYPTION_KEYS="$KEY" gateway-test
+          for i in $(seq 1 60); do
+            if curl --fail http://localhost:7860/health/ready; then exit 0; fi
+            sleep 2
+          done
+          docker logs gateway-ci
+          exit 1

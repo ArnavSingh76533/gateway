@@ -1,0 +1,46 @@
+services:
+  gateway:
+    build: .
+    ports:
+      - "127.0.0.1:7860:7860"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://gateway:${POSTGRES_PASSWORD:?Run python scripts/setup.py first}@postgres:5432/gateway
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Run python scripts/setup.py first}@redis:6379/0
+      STATIC_DIR: /app/frontend/out
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  postgres:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_DB: gateway
+      POSTGRES_USER: gateway
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run python scripts/setup.py first}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U gateway -d gateway"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  redis:
+    image: redis:7-bookworm
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Run python scripts/setup.py first}
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: [CMD-SHELL, "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  redis_data:

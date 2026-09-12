@@ -1,0 +1,6 @@
+# Set GATEWAY_DOMAIN to your DNS name. Caddy provisions HTTPS.
+{$GATEWAY_DOMAIN} {
+  reverse_proxy 127.0.0.1:7860 {
+    flush_interval -1
+  }
+}

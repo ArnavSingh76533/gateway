@@ -1,0 +1,11 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[project]
+name = "universal-gateway-client"
+version = "1.0.0"
+description = "Typed OpenAI SDK clients for Universal AI Gateway"
+requires-python = ">=3.10"
+dependencies = ["openai>=1.68,<3"]
+[tool.hatch.build.targets.wheel]
+packages = ["universal_gateway"]
