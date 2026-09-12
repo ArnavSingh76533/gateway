@@ -80,6 +80,65 @@ python -c 'import base64,secrets; print(base64.urlsafe_b64encode(secrets.token_b
 
 The application deliberately refuses embedded production startup unless persistence is explicitly configured. For an expendable demo only, use `ENVIRONMENT=development`; its local data may disappear when the Space restarts. Free hardware can sleep and is not an always-on availability guarantee. Use suitable always-on hosting for continuous agent workloads.
 
+### Hugging Face startup troubleshooting
+
+If the image builds and pushes successfully but runtime exits immediately with
+`Gateway startup failed (RuntimeError)`, the older entrypoint hid the underlying
+configuration message. With no preceding service output, first check the
+`ENCRYPTION_KEYS` secret and the production persistence requirement below. The
+updated entrypoint names these failures and reports the startup stage for other
+errors without displaying exception details that could contain credentials.
+
+1. In your **Hugging Face Space → Settings → Variables and secrets**, create a
+   **Secret** named exactly `ENCRYPTION_KEYS`. GitHub secrets and a local `.env`
+   do not populate the Space's runtime environment. On a fresh installation,
+   generate its value locally with:
+
+   ```bash
+   python -c 'import base64,secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())'
+   ```
+
+   Paste only the generated value, without quotes. This is the encryption key
+   for stored credentials, not your provider API key or a `gw_` gateway key.
+   If you already have data, restore the original encryption key instead of
+   generating a replacement. Keep it outside source control and retain a backup.
+
+2. Choose the appropriate runtime settings:
+
+   | Setting | Disposable demo | Production |
+   |---|---|---|
+   | `ENVIRONMENT` | `development` | `production` |
+   | `COOKIE_SECURE` | `true` on the HTTPS Space URL | `true` |
+   | `ALLOWED_ORIGINS` | `["https://YOUR-SPACE-SUBDOMAIN.hf.space"]` | Same, using your exact app origin |
+   | Database | Omit `DATABASE_URL` for temporary embedded PostgreSQL | Reachable external PostgreSQL, or verified durable storage suitable for embedded PostgreSQL |
+   | `PERSISTENT_STORAGE_CONFIRMED` | Leave unset | `true` only for verified durable embedded database storage |
+
+   Use the direct app URL from your Space, not the `huggingface.co/spaces/...`
+   repository URL. Keep an invitation `REGISTRATION_CODE` secret for a private
+   workspace. Without durable storage, accounts, provider connections and usage
+   may disappear on restart. The confirmation flag does not create storage.
+   Do not assume a mounted object-storage bucket is suitable for a live
+   PostgreSQL data directory; that deployment has not been validated here.
+
+3. Sync the updated repository files to the **Space repository** and restart it.
+   A GitHub-only commit does not update a separately uploaded Space unless you
+   configured synchronization. Check the runtime log and then `/health/ready`.
+   If startup still fails, share the new message and preceding service logs,
+   with credentials removed.
+
+| Updated message | Action |
+|---|---|
+| `ENCRYPTION_KEYS is missing` | Add the Space secret with that exact name. |
+| `ENCRYPTION_KEYS is invalid` | Correct the Fernet key format; restore the original key for existing data. |
+| `Embedded production PostgreSQL requires durable storage` | Configure suitable persistence or a reachable external database; use development only for disposable data. |
+| `during data directory preparation` | Check that `DATA_DIR` is writable by container UID 1000. |
+| `during embedded PostgreSQL startup` | Inspect service output and `DATA_DIR/postgres.log`; check storage permissions. |
+| `during database migrations` | Check database connectivity, credentials, TLS and migration output. |
+| `A supervised service exited unexpectedly` | Inspect preceding API/Redis logs; production also requires secure cookies and HTTPS origins. |
+
+Hugging Face references: [runtime secrets](https://huggingface.co/docs/hub/spaces-sdks-docker#secrets-and-variables-management)
+and [Space storage](https://huggingface.co/docs/hub/spaces-storage).
+
 ## Your first API call
 
 ```bash

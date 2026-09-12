@@ -10,6 +10,16 @@ import sys
 import time
 from pathlib import Path
 
+from cryptography.fernet import Fernet
+
+
+class StartupError(Exception):
+    """An operator-facing message made only from trusted, static text.
+
+    Never include environment values, command output, or another exception here.
+    """
+
+
 children: list[subprocess.Popen] = []
 pg_started = False
 stopping = False
@@ -40,18 +50,42 @@ def stop(signum: int = 0, frame: object = None) -> None:
 
 signal.signal(signal.SIGTERM, stop)
 signal.signal(signal.SIGINT, stop)
+stage = "configuration"
 try:
-    if not os.environ.get("ENCRYPTION_KEYS"):
-        raise RuntimeError("Set ENCRYPTION_KEYS before starting the gateway.")
+    encryption_keys = os.environ.get("ENCRYPTION_KEYS", "")
+    if not encryption_keys.strip():
+        raise StartupError(
+            "ENCRYPTION_KEYS is missing. In Hugging Face Space Settings, add a secret "
+            "named ENCRYPTION_KEYS containing a Fernet key, then restart the Space. "
+            "See README.md > Hugging Face startup troubleshooting."
+        )
+    try:
+        for key in encryption_keys.split(","):
+            Fernet(key.strip().encode())
+    except (ValueError, TypeError):
+        raise StartupError(
+            "ENCRYPTION_KEYS is invalid. Use a URL-safe base64-encoded 32-byte Fernet key "
+            "without surrounding quotes, not a provider API key or a gw_ key. "
+            "For existing data, restore the original encryption key. "
+            "See README.md > Hugging Face startup troubleshooting."
+        ) from None
+    if (
+        not os.environ.get("DATABASE_URL")
+        and os.environ.get("ENVIRONMENT") == "production"
+        and os.environ.get("PERSISTENT_STORAGE_CONFIRMED") != "true"
+    ):
+        raise StartupError(
+            "Embedded production PostgreSQL requires durable storage at DATA_DIR "
+            "(/data by default) and PERSISTENT_STORAGE_CONFIRMED=true. "
+            "Set that flag only after verifying suitable persistent storage, or configure "
+            "a reachable external PostgreSQL DATABASE_URL. For a disposable demo only, "
+            "use ENVIRONMENT=development; local data can be lost on restart."
+        )
+    stage = "data directory preparation"
     root.mkdir(parents=True, exist_ok=True)
     if not os.environ.get("DATABASE_URL"):
-        if (
-            os.environ.get("ENVIRONMENT") == "production"
-            and os.environ.get("PERSISTENT_STORAGE_CONFIRMED") != "true"
-        ):
-            raise RuntimeError(
-                "Embedded production PostgreSQL requires durable /data storage and PERSISTENT_STORAGE_CONFIRMED=true."
-            )
+        stage = "embedded PostgreSQL startup"
+        print(f"Gateway startup: {stage}.", flush=True)
         socket_dir = root / "run"
         socket_dir.mkdir(exist_ok=True)
         if not (pg_data / "PG_VERSION").exists():
@@ -115,6 +149,8 @@ try:
             f"postgresql+asyncpg://gateway@/gateway?host={socket_dir}"
         )
     if not os.environ.get("REDIS_URL"):
+        stage = "embedded Redis startup"
+        print(f"Gateway startup: {stage}.", flush=True)
         redis_dir = root / "redis"
         redis_dir.mkdir(exist_ok=True)
         redis_socket = root / "redis.sock"
@@ -148,9 +184,13 @@ try:
             except redis.RedisError:
                 time.sleep(0.1)
         else:
-            raise RuntimeError("Embedded Redis failed to start.")
+            raise StartupError(
+                "Embedded Redis failed to start. Check its preceding service logs."
+            )
         connection.close()
     # Alembic serializes schema changes with a PostgreSQL advisory lock in env.py.
+    stage = "database migrations"
+    print(f"Gateway startup: {stage}.", flush=True)
     subprocess.run(
         [
             sys.executable,
@@ -163,6 +203,8 @@ try:
         ],
         check=True,
     )
+    stage = "API startup and service supervision"
+    print(f"Gateway startup: {stage}.", flush=True)
     api = subprocess.Popen(
         [
             sys.executable,
@@ -187,23 +229,34 @@ try:
     children.append(api)
     while not stopping:
         if any(child.poll() is not None for child in children):
-            raise RuntimeError("A supervised service exited unexpectedly.")
+            raise StartupError(
+                "A supervised service exited unexpectedly. Check the preceding service logs."
+            )
         if pg_started:
             result = subprocess.run(
                 [str(pg_bin / "pg_ctl"), "-D", str(pg_data), "status"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                check=False,
             )
             if result.returncode:
-                raise RuntimeError("Embedded PostgreSQL exited unexpectedly.")
+                raise StartupError(
+                    "Embedded PostgreSQL exited unexpectedly. Check postgres.log."
+                )
         time.sleep(1)
+except StartupError as exc:
+    # Only explicitly curated messages are safe to display verbatim.
+    print(f"Gateway startup failed: {exc}", file=sys.stderr, flush=True)
+    sys.exit(1)
 except Exception as exc:
     # Do not include command output or database connection URLs in errors.
     print(
-        f"Gateway startup failed ({type(exc).__name__}). Check configuration and service availability.",
+        f"Gateway startup failed during {stage} ({type(exc).__name__}). "
+        "Check configuration, storage permissions, and service availability. "
+        "Exception details are withheld because they may contain credentials.",
         file=sys.stderr,
+        flush=True,
     )
-    stop()
     sys.exit(1)
 finally:
     stop()

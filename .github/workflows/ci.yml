@@ -9,8 +9,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - run: pip install -r backend/requirements.lock -e './backend[dev]' -e ./sdk/python
+      # Hashed requirements and editable source installs need separate pip invocations.
+      - run: pip install --require-hashes -r backend/requirements.lock
+      - run: pip install -e './backend[dev]' -e ./sdk/python
       - run: ruff check backend/app backend/tests
+      - run: ruff check --config backend/pyproject.toml deploy/start.py
       - run: mypy backend/app
       - run: pytest backend/tests -q
       - run: DATABASE_URL=sqlite+aiosqlite:///./migration-test.db python -m alembic -c backend/alembic.ini upgrade head
