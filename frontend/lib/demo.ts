@@ -1,5 +1,6 @@
 import { Provider, Model, Usage, Log, GatewayKey, providerInfo } from "./api";
-const now = Date.now() / 1000;
+// Fixed illustrative dates keep the static export and first client render consistent.
+const now = Date.UTC(2026, 8, 12, 12) / 1000;
 export const demoProviders: Provider[] = [
   "openrouter",
   "groq",
@@ -102,18 +103,16 @@ export const demoUsage: Usage = {
     estimated_cost: requests * 0.00034,
     priced_requests: Math.round(requests * 0.86),
   })),
-  providers: demoProviders
-    .slice(0, 4)
-    .map((p, i) => ({
-      provider_name: p.name,
-      requests: [12330, 7910, 3400, 1179][i],
-      successes: [12300, 7880, 3330, 1160][i],
-      avg_latency_ms: [620, 182, 830, 940][i],
-      input_tokens: 1231000,
-      output_tokens: 218600,
-      estimated_cost: [3.16, 1.85, 2.45, 0.96][i],
-      priced_requests: 1000,
-    })),
+  providers: demoProviders.slice(0, 4).map((p, i) => ({
+    provider_name: p.name,
+    requests: [12330, 7910, 3400, 1179][i],
+    successes: [12300, 7880, 3330, 1160][i],
+    avg_latency_ms: [620, 182, 830, 940][i],
+    input_tokens: 1231000,
+    output_tokens: 218600,
+    estimated_cost: [3.16, 1.85, 2.45, 0.96][i],
+    priced_requests: 1000,
+  })),
 };
 export const demoLogs: Log[] = Array.from({ length: 8 }, (_, i) => ({
   id: `req_demo_${i + 1}`,

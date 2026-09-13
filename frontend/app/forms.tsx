@@ -20,6 +20,7 @@ export function AuthForm({
   const [register, setRegister] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -64,7 +65,21 @@ export function AuthForm({
             Self-hosted. Privately connected.
           </div>
         </div>
-        <form onSubmit={submit} className="form auth-form">
+        <form
+          onSubmit={submit}
+          className="form auth-form"
+          onInvalid={(e) => {
+            const input = e.target as HTMLInputElement;
+            setFieldErrors((prev) => ({
+              ...prev,
+              [input.name]: input.validationMessage,
+            }));
+          }}
+          onInput={(e) => {
+            const input = e.target as HTMLInputElement;
+            setFieldErrors((prev) => ({ ...prev, [input.name]: "" }));
+          }}
+        >
           <p className="muted">
             {register
               ? "Connect your first provider after creating an account."
@@ -75,11 +90,20 @@ export function AuthForm({
               Your name
               <input
                 name="name"
+                aria-invalid={!!fieldErrors.name}
+                aria-describedby={
+                  fieldErrors.name ? "auth-name-error" : undefined
+                }
                 required
                 maxLength={80}
                 autoComplete="name"
                 placeholder="Alex Morgan"
               />
+              {fieldErrors.name && (
+                <small className="field-error" id="auth-name-error">
+                  {fieldErrors.name}
+                </small>
+              )}
             </label>
           )}
           <label>
@@ -87,22 +111,42 @@ export function AuthForm({
             <input
               type="email"
               name="email"
+              aria-invalid={!!fieldErrors.email}
+              aria-describedby={
+                fieldErrors.email ? "auth-email-error" : undefined
+              }
               required
               autoComplete="email"
               placeholder="you@example.com"
             />
+            {fieldErrors.email && (
+              <small className="field-error" id="auth-email-error">
+                {fieldErrors.email}
+              </small>
+            )}
           </label>
           <label>
             Password
             <input
               type="password"
               name="password"
+              aria-invalid={!!fieldErrors.password}
+              aria-describedby={
+                fieldErrors.password ? "auth-password-error" : undefined
+              }
               minLength={12}
               maxLength={128}
               required
               autoComplete={register ? "new-password" : "current-password"}
-              placeholder="At least 12 characters"
+              placeholder={
+                register ? "At least 12 characters" : "Your password"
+              }
             />
+            {fieldErrors.password && (
+              <small className="field-error" id="auth-password-error">
+                {fieldErrors.password}
+              </small>
+            )}
           </label>
           {register && (
             <label>
@@ -115,7 +159,11 @@ export function AuthForm({
             </label>
           )}
           {error && <Banner tone="error">{error}</Banner>}
-          <button className="button primary full" disabled={busy}>
+          <button
+            className="button primary full"
+            disabled={busy}
+            aria-busy={busy}
+          >
             {busy ? (
               <LoaderCircle size={17} className="spin" />
             ) : (
@@ -125,10 +173,11 @@ export function AuthForm({
           </button>
           <button
             type="button"
-            className="text-button"
+            className="text-button auth-alternate"
             onClick={() => {
               setRegister(!register);
               setError("");
+              setFieldErrors({});
             }}
           >
             {register
@@ -156,14 +205,32 @@ export function ProviderForm({
   const [kind, setKind] = useState(provider?.kind || "openrouter"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [headersError, setHeadersError] = useState("");
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setError("");
+    setHeadersError("");
     const f = new FormData(e.currentTarget);
     try {
       const raw = String(f.get("headers") || "").trim();
-      const headers = raw ? JSON.parse(raw) : undefined;
+      let headers: Record<string, string> | undefined;
+      try {
+        headers = raw ? JSON.parse(raw) : undefined;
+        if (
+          raw &&
+          (!headers ||
+            Array.isArray(headers) ||
+            typeof headers !== "object" ||
+            Object.values(headers).some((value) => typeof value !== "string"))
+        )
+          throw new Error();
+      } catch {
+        setHeadersError(
+          'Enter a JSON object with text values, for example {"X-Organization":"your-org"}.',
+        );
+        return;
+      }
       const body: Record<string, unknown> = {
         name: f.get("name"),
         priority: Number(f.get("priority")),
@@ -252,7 +319,7 @@ export function ProviderForm({
             name="priority"
             min={0}
             max={1000}
-            defaultValue={provider?.priority || 10}
+            defaultValue={provider?.priority ?? 10}
             required
           />
         </label>
@@ -262,9 +329,17 @@ export function ProviderForm({
             Headers as JSON
             <textarea
               name="headers"
+              aria-invalid={!!headersError}
+              aria-describedby={headersError ? "headers-error" : undefined}
+              onChange={() => setHeadersError("")}
               rows={3}
               placeholder={'{"X-Organization": "your-org"}'}
             />
+            {headersError && (
+              <small className="field-error" id="headers-error">
+                {headersError}
+              </small>
+            )}
           </label>
           <p className="form-note">
             {provider
@@ -278,7 +353,7 @@ export function ProviderForm({
           <button type="button" className="button" onClick={onClose}>
             Cancel
           </button>
-          <button className="button primary" disabled={busy}>
+          <button className="button primary" disabled={busy} aria-busy={busy}>
             {busy ? (
               <LoaderCircle className="spin" size={16} />
             ) : (
@@ -449,8 +524,8 @@ export function ModelForm({
           <button type="button" className="button" onClick={onClose}>
             Cancel
           </button>
-          <button className="button primary" disabled={busy}>
-            Save model
+          <button className="button primary" disabled={busy} aria-busy={busy}>
+            {busy && <LoaderCircle className="spin" size={16} />} Save model
           </button>
         </div>
       </form>
