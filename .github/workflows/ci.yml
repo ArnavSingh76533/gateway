@@ -41,3 +41,11 @@ jobs:
           done
           docker logs gateway-ci
           exit 1
+      - name: Test server-only administrator activation
+        run: |
+          curl --fail --silent http://localhost:7860/api/auth/register \
+            -H 'Origin: http://localhost:7860' -H 'Content-Type: application/json' \
+            --data '{"email":"ci-admin@example.com","name":"CI Admin","password":"CI-only-test-password-123"}' > /dev/null
+          docker exec gateway-ci python scripts/admin.py grant --email ci-admin@example.com
+          docker exec gateway-ci python scripts/admin.py list
+          docker exec gateway-ci python scripts/admin.py revoke --email ci-admin@example.com

@@ -1,4 +1,9 @@
-export type User = { id: string; name: string; email: string };
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  is_admin?: boolean;
+};
 export type Health = {
   status?: string;
   latency_ms?: number;
@@ -19,6 +24,8 @@ export type Provider = {
   health: Health;
 };
 export type Model = {
+  shared?: boolean;
+  owned?: boolean;
   id: string;
   model_id: string;
   name: string;
@@ -141,6 +148,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
+    public code?: string,
   ) {
     super(message);
   }
@@ -161,6 +169,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError(
       error?.error?.message || `Request failed (${response.status})`,
       response.status,
+      error?.error?.code,
     );
   }
   return response.status === 204
@@ -176,7 +185,42 @@ export function num(value: number | null | undefined): string {
       }).format(value);
 }
 export function money(value: number | null | undefined): string {
-  return value == null ? "Unknown" : `$${value.toFixed(value < 0.01 ? 5 : 2)}`;
+  return value == null
+    ? "Unknown"
+    : `$${value.toFixed(value > 0 && value < 0.01 ? 5 : 2)}`;
+}
+export function duration(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return value >= 1000
+    ? `${(value / 1000).toFixed(value >= 10000 ? 1 : 2)} s`
+    : `${Math.round(value)} ms`;
+}
+
+export async function loadAllModels(
+  signal?: AbortSignal,
+  ownedOnly = false,
+): Promise<Model[]> {
+  const models = new Map<string, Model>();
+  let offset = 0;
+  while (true) {
+    const page = await api<Page<Model>>(
+      `/models?limit=1000&offset=${offset}${ownedOnly ? "&owned_only=true" : ""}`,
+      { signal },
+    );
+    page.data.forEach((model) => models.set(model.id, model));
+    offset += page.data.length;
+    if (offset >= page.total) {
+      if (models.size < page.total)
+        throw new Error(
+          "The catalog changed while loading. Refresh models to try again.",
+        );
+      return [...models.values()];
+    }
+    if (!page.data.length)
+      throw new Error(
+        "The complete catalog could not be loaded. Refresh models to try again.",
+      );
+  }
 }
 export function stamp(value: number | null | undefined): string {
   return value

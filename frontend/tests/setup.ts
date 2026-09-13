@@ -40,6 +40,7 @@ export function setViewport(width: number) {
   });
 }
 beforeEach(() => {
+  window.scrollTo = vi.fn();
   setViewport(1440);
   window.history.replaceState(null, "", "/");
   document.documentElement.lang = "en";

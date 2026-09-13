@@ -220,9 +220,11 @@ export function CheckRow({ children }: { children: ReactNode }) {
 export function Topology({
   providers,
   demo,
+  siteName = "Nexus",
 }: {
   providers: Provider[];
   demo: boolean;
+  siteName?: string;
 }) {
   const active = providers.filter((p) => p.enabled).slice(0, 3);
   return (
@@ -237,9 +239,11 @@ export function Topology({
       </div>
       <div className="route-line" />
       <div className="gateway-node">
-        <span className="brand-mark mini">N</span>
+        <span className="brand-mark mini">
+          {siteName.slice(0, 1).toUpperCase()}
+        </span>
         <div>
-          <strong>Nexus gateway</strong>
+          <strong>{siteName} gateway</strong>
           <small>One endpoint · your keys</small>
         </div>
         <span className="node-tag">/v1</span>
@@ -267,7 +271,7 @@ export function Topology({
         <span className="dot" />
         {demo
           ? "Example routing topology"
-          : `${providers.filter((p) => p.enabled).length} enabled connections`}
+          : `${providers.filter((p) => p.enabled).length} enabled ${providers.filter((p) => p.enabled).length === 1 ? "connection" : "connections"}`}
       </div>
     </div>
   );

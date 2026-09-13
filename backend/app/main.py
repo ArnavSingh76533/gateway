@@ -12,12 +12,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse, JSONResponse, Response
 from redis.exceptions import RedisError
-from sqlalchemy import select, text
+from sqlalchemy import or_, select, text
 from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from . import anthropic, auth, dashboard
+from . import admin, anthropic, auth, dashboard
 from .auth import CurrentUser, GatewayPrincipal, Principal
 from .config import Settings
 from .db import Base, create_database
@@ -34,6 +34,7 @@ from .schemas import (
     SpeechRequest,
 )
 from .security import Vault, secure_transport, token_hash
+from .site_config import published_ids, site_options
 from .state import SharedState
 
 logger = logging.getLogger("gateway")
@@ -217,6 +218,7 @@ def create_app(
 
     app.include_router(auth.router)
     app.include_router(dashboard.router)
+    app.include_router(admin.router)
     app.include_router(anthropic.router)
 
     @app.get("/health/live", tags=["Health"])
@@ -237,12 +239,16 @@ def create_app(
     @app.get("/v1/models", tags=["OpenAI compatible"])
     async def list_models(request: Request, principal: GatewayPrincipal) -> dict:
         async with request.app.state.db() as db:
+            options = await site_options(db, request.app.state.settings)
+            shared = (
+                set(await db.scalars(published_ids())) if options.shared_models_enabled else set()
+            )
             rows = (
                 await db.execute(
                     select(Provider, RegistryModel)
                     .join(RegistryModel)
                     .where(
-                        Provider.user_id == principal.user_id,
+                        or_(Provider.user_id == principal.user_id, RegistryModel.id.in_(shared)),
                         Provider.enabled.is_(True),
                         RegistryModel.available.is_(True),
                     )
@@ -260,6 +266,7 @@ def create_app(
                     "provider": p.kind,
                     "capabilities": m.capabilities,
                     "context_window": m.context_window,
+                    "shared": m.id in shared,
                 }
                 for p, m in rows
             ],
@@ -313,8 +320,11 @@ def create_app(
 
     @app.post("/api/playground", tags=["Dashboard"])
     async def playground(body: ChatRequest, request: Request, user: CurrentUser) -> Response:
+        async with request.app.state.db() as db:
+            options = await site_options(db, request.app.state.settings)
         await request.app.state.shared.rate_limit(
-            "user:" + user.id, request.app.state.settings.requests_per_minute
+            "user:" + user.id,
+            min(options.requests_per_minute, request.app.state.settings.requests_per_minute),
         )
         return await Execution(request, Principal(user.id), body, "chat/completions").run()
 
@@ -352,6 +362,7 @@ def create_app(
                 elif path.startswith("/api/") and path not in (
                     "/api/auth/login",
                     "/api/auth/register",
+                    "/api/site",
                 ):
                     operation["security"] = [{"DashboardSession": []}]
                     if method != "get":

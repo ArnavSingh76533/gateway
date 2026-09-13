@@ -1,0 +1,44 @@
+name: Deploy gateway Space
+on:
+  workflow_dispatch:
+    inputs:
+      storage_ready:
+        description: "I have backed up the live database or explicitly accept losing its ephemeral data"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main' && inputs.storage_ready
+    runs-on: ubuntu-latest
+    environment: huggingface
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'huggingface_hub>=1.19.0,<2'
+      - name: Preserve the Space metadata and upload the complete application
+        env:
+          HF_OIDC_RESOURCE: spaces/shivamkr00902/data2
+        run: |
+          hf download shivamkr00902/data2 README.md --repo-type space --local-dir ../space-metadata
+          python - <<'PY'
+          from pathlib import Path
+          space = Path('../space-metadata/README.md').read_text()
+          if not space.startswith('---\n') or '\n---\n' not in space[4:]:
+              raise SystemExit('Space metadata is missing. No files were uploaded.')
+          metadata = space.split('\n---\n', 1)[0] + '\n---\n\n'
+          readme = Path('README.md')
+          readme.write_text(metadata + readme.read_text())
+          PY
+          hf upload shivamkr00902/data2 . . --repo-type space \
+            --exclude '.git/**' '.github/**' \
+            --commit-message "Deploy gateway ${GITHUB_SHA}"

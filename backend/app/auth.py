@@ -13,6 +13,7 @@ from .errors import fail
 from .models import AuditLog, GatewayKey, Session, User
 from .schemas import Credentials, NewGatewayKey, Register
 from .security import DUMMY_HASH, hash_password, new_key, token_hash, verify_password
+from .site_config import site_options
 
 router = APIRouter(prefix="/api/auth", tags=["Accounts"])
 DB = Annotated[AsyncSession, Depends(get_db)]
@@ -30,6 +31,10 @@ async def current_user(request: Request, db: DB) -> User:
     user = await db.get(User, session.user_id)
     if not user:
         raise fail(401, "Please sign in.", "authentication_required")
+    if user.disabled:
+        raise fail(
+            403, "This account is suspended. Contact the administrator.", "account_suspended"
+        )
     return user
 
 
@@ -56,8 +61,13 @@ async def gateway_auth(request: Request, db: DB) -> Principal:
     )
     if not key or (key.expires_at and key.expires_at < time.time()):
         raise fail(401, "Invalid or expired Gateway API key.", "invalid_api_key")
+    user = await db.get(User, key.user_id)
+    if not user or user.disabled:
+        raise fail(403, "This account is suspended.", "account_suspended")
+    options = await site_options(db, request.app.state.settings)
     await request.app.state.shared.rate_limit(
-        "user:" + key.user_id, request.app.state.settings.requests_per_minute
+        "user:" + key.user_id,
+        min(options.requests_per_minute, request.app.state.settings.requests_per_minute),
     )
     key.last_used_at = time.time()
     await db.commit()
@@ -98,8 +108,8 @@ async def establish_session(
         )
 
 
-def user_view(user: User) -> dict[str, str]:
-    return {"id": user.id, "name": user.name, "email": user.email}
+def user_view(user: User) -> dict[str, str | bool]:
+    return {"id": user.id, "name": user.name, "email": user.email, "is_admin": user.is_admin}
 
 
 async def issue_key(db: AsyncSession, user_id: str, body: NewGatewayKey) -> tuple[GatewayKey, str]:
@@ -120,7 +130,8 @@ async def issue_key(db: AsyncSession, user_id: str, body: NewGatewayKey) -> tupl
 @router.post("/register", status_code=201)
 async def register(body: Register, request: Request, response: Response, db: DB) -> dict:
     settings = request.app.state.settings
-    if not settings.allow_registration:
+    options = await site_options(db, settings)
+    if not settings.allow_registration or not options.registration_open:
         raise fail(403, "Registration is currently closed.", "registration_closed")
     if settings.registration_code and not secrets.compare_digest(
         body.registration_code, settings.registration_code
@@ -151,6 +162,10 @@ async def login(body: Credentials, request: Request, response: Response, db: DB)
     valid = await verify_password(user.password_hash if user else DUMMY_HASH, body.password)
     if not user or not valid:
         raise fail(401, "Incorrect email or password.", "invalid_credentials")
+    if user.disabled:
+        raise fail(
+            403, "This account is suspended. Contact the administrator.", "account_suspended"
+        )
     db.add(AuditLog(user_id=user.id, action="account.login"))
     await establish_session(request, response, db, user)
     return {"user": user_view(user)}

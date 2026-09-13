@@ -482,6 +482,26 @@
             }
           },
           {
+            "name": "free_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Free Only"
+            }
+          },
+          {
+            "name": "owned_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Owned Only"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -1003,6 +1023,370 @@
         ]
       }
     },
+    "/api/site": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Public Settings",
+        "operationId": "public_settings_api_site_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Public Settings Api Site Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/settings": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Get Settings",
+        "operationId": "get_settings_api_admin_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Settings Api Admin Settings Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Save Settings",
+        "operationId": "save_settings_api_admin_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteOptions"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Save Settings Api Admin Settings Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value of the gw_csrf cookie. Same-origin dashboard mutations only."
+          }
+        ]
+      }
+    },
+    "/api/admin/summary": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Summary",
+        "operationId": "summary_api_admin_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Summary Api Admin Summary Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Users",
+        "operationId": "users_api_admin_users_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Search"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Users Api Admin Users Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
+    "/api/admin/users/{uid}": {
+      "patch": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Account Status",
+        "operationId": "account_status_api_admin_users__uid__patch",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Uid"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value of the gw_csrf cookie. Same-origin dashboard mutations only."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountStatus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Account Status Api Admin Users  Uid  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
+    "/api/admin/shared-models": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Shared Models",
+        "operationId": "shared_models_api_admin_shared_models_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Shared Models Api Admin Shared Models Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
+    "/api/admin/shared-models/{mid}": {
+      "put": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Publish",
+        "operationId": "publish_api_admin_shared_models__mid__put",
+        "parameters": [
+          {
+            "name": "mid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mid"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value of the gw_csrf cookie. Same-origin dashboard mutations only."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishOptions"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Publish Api Admin Shared Models  Mid  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
     "/v1/messages": {
       "post": {
         "tags": [
@@ -1471,6 +1855,20 @@
   },
   "components": {
     "schemas": {
+      "AccountStatus": {
+        "properties": {
+          "disabled": {
+            "type": "boolean",
+            "title": "Disabled"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "disabled"
+        ],
+        "title": "AccountStatus"
+      },
       "Capabilities": {
         "properties": {
           "chat": {
@@ -2359,6 +2757,32 @@
         "type": "object",
         "title": "ProviderPatch"
       },
+      "PublishOptions": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "requests_per_minute": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 1.0,
+            "title": "Requests Per Minute",
+            "default": 5
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "maximum": 8192.0,
+            "minimum": 128.0,
+            "title": "Max Output Tokens",
+            "default": 1024
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PublishOptions"
+      },
       "Register": {
         "properties": {
           "email": {
@@ -2474,6 +2898,93 @@
           "input"
         ],
         "title": "ResponseRequest"
+      },
+      "SiteOptions": {
+        "properties": {
+          "site_name": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Site Name",
+            "default": "Nexus"
+          },
+          "tagline": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Tagline",
+            "default": "Universal AI Gateway"
+          },
+          "welcome_text": {
+            "type": "string",
+            "maxLength": 180,
+            "minLength": 1,
+            "title": "Welcome Text",
+            "default": "Your models. Your keys. One connection."
+          },
+          "accent": {
+            "type": "string",
+            "enum": [
+              "purple",
+              "blue",
+              "green"
+            ],
+            "title": "Accent",
+            "default": "purple"
+          },
+          "registration_open": {
+            "type": "boolean",
+            "title": "Registration Open",
+            "default": true
+          },
+          "requests_per_minute": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Requests Per Minute",
+            "default": 60
+          },
+          "shared_models_enabled": {
+            "type": "boolean",
+            "title": "Shared Models Enabled",
+            "default": true
+          },
+          "shared_requests_per_minute": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Shared Requests Per Minute",
+            "default": 30
+          },
+          "default_mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "fastest",
+              "cheapest",
+              "reasoning",
+              "coding",
+              "vision"
+            ],
+            "title": "Default Mode",
+            "default": "auto"
+          },
+          "default_stream": {
+            "type": "boolean",
+            "title": "Default Stream",
+            "default": true
+          },
+          "default_retries": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Default Retries",
+            "default": 2
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SiteOptions"
       },
       "SpeechRequest": {
         "properties": {

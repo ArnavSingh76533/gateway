@@ -116,9 +116,10 @@ export const demoUsage: Usage = {
 };
 export const demoLogs: Log[] = Array.from({ length: 8 }, (_, i) => ({
   id: `req_demo_${i + 1}`,
-  provider_name: demoProviders[i % 4].name,
+  provider_name: i === 2 ? "OpenRouter" : demoModels[i % 6].provider_name,
   requested_model: i % 3 === 0 ? "auto/coding" : "auto",
-  resolved_model: demoModels[i % 6].model_id,
+  resolved_model:
+    i === 2 ? "deepseek/deepseek-chat-v3.1" : demoModels[i % 6].model_id,
   endpoint: "chat/completions",
   status: i === 5 ? 429 : 200,
   latency_ms: [182, 634, 820, 241, 508, 1240, 312, 466][i],
@@ -145,8 +146,9 @@ export const demoLogs: Log[] = Array.from({ length: 8 }, (_, i) => ({
         ]
       : [
           {
-            provider: demoProviders[i % 4].kind,
-            provider_name: demoProviders[i % 4].name,
+            provider: demoModels[i % 6].provider,
+            provider_name:
+              i === 2 ? "OpenRouter" : demoModels[i % 6].provider_name,
             model: demoModels[i % 6].model_id,
             status: i === 5 ? 429 : 200,
             latency_ms: 182,

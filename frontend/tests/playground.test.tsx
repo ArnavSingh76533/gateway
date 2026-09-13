@@ -10,6 +10,7 @@ function mount(demo = false) {
     demo,
     providers: demoProviders,
     models: demoModels,
+    loadCatalog: vi.fn().mockResolvedValue(demoModels),
     requireAccount: vi.fn((fn: () => void) => {
       if (!demo) fn();
     }),

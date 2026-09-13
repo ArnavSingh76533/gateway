@@ -8,15 +8,16 @@ from typing import Any
 from urllib.parse import quote
 
 import httpx
-from fastapi import Request
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from .auth import Principal
 from .discovery import adapter_for
 from .errors import UpstreamError, fail
-from .models import Provider, RegistryModel, RequestLog
+from .models import Provider, PublishedModel, RegistryModel, RequestLog
 from .schemas import GatewayRequest
+from .site_config import published_ids, site_options
 
 RETRYABLE = {401, 403, 404, 429, 500, 502, 503, 504}
 ENDPOINT_CAPABILITY = {
@@ -120,12 +121,14 @@ async def candidates(
             ) from None
     required = requirements(endpoint, body.model_dump(), mode)
     async with state.db() as db:
+        options = await site_options(db, state.settings)
+        shared = set(await db.scalars(published_ids())) if options.shared_models_enabled else set()
         rows = (
             await db.execute(
                 select(Provider, RegistryModel)
                 .join(RegistryModel, Provider.id == RegistryModel.provider_id)
                 .where(
-                    Provider.user_id == principal.user_id,
+                    or_(Provider.user_id == principal.user_id, RegistryModel.id.in_(shared)),
                     Provider.enabled.is_(True),
                     RegistryModel.available.is_(True),
                 )
@@ -133,6 +136,8 @@ async def candidates(
         ).all()
     matches: list[tuple[int, Candidate]] = []
     for provider, model in rows:
+        if provider.user_id != principal.user_id and endpoint != "chat/completions":
+            continue
         if pin and pin not in (provider.kind, provider.id):
             continue
         if endpoint not in adapter_for(state, provider).endpoints:
@@ -163,6 +168,8 @@ async def candidates(
             if c.model.input_price is not None and c.model.output_price is not None
             else float("inf")
         )
+        if c.provider.user_id != principal.user_id:
+            price = 0
         base = (exact, not c.provider.pinned)
         if mode == "fastest":
             return base + (c.latency, c.provider.priority, c.model.model_id)
@@ -269,7 +276,13 @@ class Execution:
                     user_id=self.principal.user_id,
                     key_id=self.principal.key_id,
                     provider_id=c.provider.id if c else None,
-                    provider_name=c.provider.name if c else None,
+                    provider_name=(
+                        "Community"
+                        if c.provider.user_id != self.principal.user_id
+                        else c.provider.name
+                    )
+                    if c
+                    else None,
                     requested_model=self.body.model,
                     resolved_model=c.model.model_id if c else None,
                     endpoint=self.endpoint,
@@ -277,7 +290,12 @@ class Execution:
                     latency_ms=(time.monotonic() - self.started) * 1000,
                     input_tokens=self.input_tokens,
                     output_tokens=self.output_tokens,
-                    estimated_cost=estimated,
+                    estimated_cost=0
+                    if c and c.provider.user_id != self.principal.user_id
+                    else estimated,
+                    sponsored_cost=estimated
+                    if c and c.provider.user_id != self.principal.user_id
+                    else None,
                     attempts=self.attempts,
                     error_code=error,
                 )
@@ -337,13 +355,80 @@ class Execution:
             if (await self.state.shared.health(c.provider.id)).get("status") == "cooldown":
                 continue
             self.current = c
+            if c.provider.user_id != self.principal.user_id:
+                # Re-check publication immediately before a shared upstream attempt.
+                async with self.state.db() as db:
+                    options = await site_options(db, self.state.settings)
+                    publication = await db.get(PublishedModel, c.model.id)
+                    active = await db.scalar(
+                        published_ids().where(PublishedModel.model_id == c.model.id)
+                    )
+                if not options.shared_models_enabled or not publication or not active:
+                    continue
+                if len(json.dumps(payload)) > 64000:
+                    await self.record(413, "shared_input_limit")
+                    raise fail(
+                        413,
+                        "Community model requests are limited to 64,000 characters.",
+                        "shared_input_limit",
+                    )
+                try:
+                    await self.state.shared.rate_limit(
+                        "community:" + self.principal.user_id + ":" + c.model.id,
+                        publication.requests_per_minute,
+                    )
+                    await self.state.shared.rate_limit(
+                        "community:global", options.shared_requests_per_minute
+                    )
+                except HTTPException:
+                    await self.record(429, "shared_rate_limit")
+                    raise
+                # Provider-specific extensions may override generation limits or
+                # request billable audio/storage. Shared routes accept standard chat fields.
+                shared_fields = {
+                    "messages",
+                    "stream",
+                    "stream_options",
+                    "temperature",
+                    "top_p",
+                    "frequency_penalty",
+                    "presence_penalty",
+                    "seed",
+                    "stop",
+                    "tools",
+                    "tool_choice",
+                    "parallel_tool_calls",
+                    "response_format",
+                    "functions",
+                    "function_call",
+                    "max_tokens",
+                    "max_completion_tokens",
+                    "n",
+                    "reasoning_effort",
+                    "logprobs",
+                    "top_logprobs",
+                    "logit_bias",
+                }
+                payload = {key: value for key, value in payload.items() if key in shared_fields}
+                payload["n"] = 1
+                token_field = (
+                    "max_completion_tokens" if "max_completion_tokens" in payload else "max_tokens"
+                )
+                payload[token_field] = min(
+                    payload.get(token_field) or publication.max_output_tokens,
+                    publication.max_output_tokens,
+                )
+                if token_field == "max_completion_tokens":
+                    payload.pop("max_tokens", None)
             adapter = adapter_for(self.state, c.provider)
             payload["model"] = c.model.model_id
             started = time.monotonic()
             response: httpx.Response | None = None
             attempt: dict[str, Any] = {
                 "provider": c.provider.kind,
-                "provider_name": c.provider.name,
+                "provider_name": "Community"
+                if c.provider.user_id != self.principal.user_id
+                else c.provider.name,
                 "model": c.model.model_id,
                 "status": 0,
                 "latency_ms": 0.0,

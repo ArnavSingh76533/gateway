@@ -9,13 +9,16 @@ import {
 } from "lucide-react";
 import { api, User, Provider, Model, providerInfo } from "@/lib/api";
 import { Banner, CheckRow, Modal } from "./ui";
+import { defaultSite, SiteOptions } from "@/lib/site";
 
 export function AuthForm({
   onClose,
   onSuccess,
+  site = defaultSite,
 }: {
   onClose: () => void;
   onSuccess: (user: User, key?: string) => void;
+  site?: SiteOptions;
 }) {
   const [register, setRegister] = useState(false),
     [busy, setBusy] = useState(false),
@@ -46,14 +49,10 @@ export function AuthForm({
     >
       <div className="auth-layout">
         <div className="auth-aside">
-          <div className="brand-mark large">N</div>
-          <h2>
-            Your models.
-            <br />
-            Your keys.
-            <br />
-            <span>One connection.</span>
-          </h2>
+          <div className="brand-mark large">
+            {site.site_name.slice(0, 1).toUpperCase()}
+          </div>
+          <h2>{site.welcome_text}</h2>
           <p>Bring your providers together in a workspace you control.</p>
           <div className="auth-checks">
             <CheckRow>Encrypted provider credentials</CheckRow>

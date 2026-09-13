@@ -1,6 +1,6 @@
 "use client";
 import { Check, TriangleAlert, ChevronRight } from "lucide-react";
-import { Log, num, stamp } from "@/lib/api";
+import { Log, num, stamp, duration } from "@/lib/api";
 import { Badge, Empty, Price } from "./ui";
 export default function RequestTable({
   logs,
@@ -63,7 +63,7 @@ export default function RequestTable({
                 </Badge>
               </td>
               <td className="mono" data-label="Latency" role="cell">
-                {Math.round(log.latency_ms)} <span className="muted">ms</span>
+                {duration(log.latency_ms)}
               </td>
               {!compact && (
                 <>

@@ -48,7 +48,10 @@ import {
   num,
   money,
   stamp,
+  duration,
 } from "@/lib/api";
+import { defaultSite, SiteOptions } from "@/lib/site";
+import { errorGuidance } from "@/lib/errors";
 import {
   demoProviders,
   demoModels,
@@ -58,6 +61,7 @@ import {
 } from "@/lib/demo";
 import { AuthForm, ProviderForm, ModelForm } from "./forms";
 import Playground from "./playground";
+import AdminPanel from "./admin-panel";
 import Documentation from "./documentation";
 import RequestTable from "./request-table";
 import {
@@ -85,7 +89,8 @@ type View =
   | "keys"
   | "requests"
   | "usage"
-  | "docs";
+  | "docs"
+  | "admin";
 const nav: { id: View; name: string; icon: typeof Activity }[] = [
   { id: "overview", name: "Overview", icon: LayoutDashboard },
   { id: "providers", name: "Providers", icon: Waypoints },
@@ -95,6 +100,7 @@ const nav: { id: View; name: string; icon: typeof Activity }[] = [
   { id: "requests", name: "Request logs", icon: Activity },
   { id: "usage", name: "Usage & analytics", icon: ChartNoAxesCombined },
   { id: "docs", name: "Documentation", icon: BookOpen },
+  { id: "admin", name: "Administration", icon: ShieldCheck },
 ];
 const blankUsage: Usage = {
   days: 7,
@@ -112,6 +118,14 @@ const blankUsage: Usage = {
 };
 
 export default function Dashboard() {
+  const [site, setSite] = useState<SiteOptions>(defaultSite);
+  const [revision, setRevision] = useState(0);
+  const [playgroundModel, setPlaygroundModel] = useState<Model | null>(null);
+  const [explorerModels, setExplorerModels] = useState<Model[]>([]);
+  const [explorerTotal, setExplorerTotal] = useState(0);
+  const [requestLogs, setRequestLogs] = useState<Log[]>([]);
+  const [requestTotal, setRequestTotal] = useState(0);
+  const [freeOnly, setFreeOnly] = useState(false);
   const [view, setView] = useState<View>("overview"),
     [user, setUser] = useState<User | null>(null),
     [demo, setDemo] = useState(true),
@@ -176,22 +190,30 @@ export default function Dashboard() {
     };
     syncHash();
     window.addEventListener("hashchange", syncHash);
-    api<User>("/auth/me")
-      .then((u) => {
+    Promise.all([
+      api<User>("/auth/me").catch(() => null),
+      api<SiteOptions>("/site").catch(() => defaultSite),
+    ])
+      .then(([u, options]) => {
         setUser(u);
-        setDemo(false);
-      })
-      .catch(() => {
-        setDemo(true);
+        setDemo(!u);
+        setSite(options);
       })
       .finally(() => setReady(true));
     return () => window.removeEventListener("hashchange", syncHash);
   }, []);
   useEffect(() => {
-    document.title = `${nav.find((n) => n.id === view)?.name || "Overview"} · Nexus AI Gateway`;
+    document.title = `${nav.find((n) => n.id === view)?.name || "Overview"} · ${site.site_name} AI Gateway`;
+  }, [view, site.site_name]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
   }, [view]);
   useEffect(() => {
     if (!mobile) return;
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setMobile(false);
+      return;
+    }
     const drawer = sidebarRef.current;
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
@@ -257,6 +279,7 @@ export default function Dashboard() {
       setTotalLogs(l.total);
       setUsage(u);
       setConnectionError("");
+      setRevision((value) => value + 1);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setUser(null);
@@ -276,12 +299,12 @@ export default function Dashboard() {
     let active = true;
     const timer = setTimeout(() => {
       api<Page<Model>>(
-        `/models?limit=100&offset=${modelPage * 100}&search=${encodeURIComponent(search)}&capability=${capability}&provider=${filterProvider}`,
+        `/models?limit=100&offset=${modelPage * 100}&search=${encodeURIComponent(search)}&capability=${capability}&provider=${filterProvider}&free_only=${freeOnly}`,
       )
         .then((r) => {
           if (active) {
-            setModels(r.data);
-            setTotalModels(r.total);
+            setExplorerModels(r.data);
+            setExplorerTotal(r.total);
           }
         })
         .catch((e) => notify(e.message, "error"));
@@ -290,38 +313,56 @@ export default function Dashboard() {
       active = false;
       clearTimeout(timer);
     };
-  }, [view, demo, search, capability, filterProvider, modelPage, notify]);
+  }, [
+    view,
+    demo,
+    search,
+    capability,
+    filterProvider,
+    freeOnly,
+    modelPage,
+    notify,
+    revision,
+  ]);
   useEffect(() => {
     if (demo || view !== "requests") return;
     let active = true;
     api<Page<Log>>(`/logs?offset=${logPage * 25}&errors_only=${errorsOnly}`)
       .then((r) => {
         if (active) {
-          setLogs(r.data);
-          setTotalLogs(r.total);
+          setRequestLogs(r.data);
+          setRequestTotal(r.total);
         }
       })
       .catch((e) => notify(e.message, "error"));
     return () => {
       active = false;
     };
-  }, [view, demo, logPage, errorsOnly, notify]);
+  }, [view, demo, logPage, errorsOnly, notify, revision]);
   const p = demo ? demoProviders : providers,
     m = demo ? demoModels : models,
     k = demo ? demoKeys : keys,
     l = demo ? demoLogs : logs,
     u = demo ? demoUsage : usage;
   const displayedModels = demo
-    ? m.filter(
-        (x) =>
-          (!search ||
-            [x.name, x.model_id].some((v) =>
-              v.toLowerCase().includes(search.toLowerCase()),
-            )) &&
-          (!capability || x.capabilities[capability]) &&
-          (!filterProvider || x.provider_id === filterProvider),
-      )
-    : m;
+    ? m
+        .filter(
+          (x) =>
+            (!search ||
+              [x.name, x.model_id].some((v) =>
+                v.toLowerCase().includes(search.toLowerCase()),
+              )) &&
+            (!capability || x.capabilities[capability]) &&
+            (!filterProvider || x.provider_id === filterProvider),
+          // Sample filtering follows the same free-price rule as the live catalog.
+        )
+        .filter(
+          (x) =>
+            !freeOnly ||
+            x.shared ||
+            (x.input_price === 0 && x.output_price === 0),
+        )
+    : explorerModels;
   const s = u.summary,
     successRate = s.requests
       ? (((s.successes || 0) / s.requests) * 100).toFixed(1)
@@ -381,8 +422,7 @@ export default function Dashboard() {
       />
       <Metric
         label="Average latency"
-        value={s.avg_latency_ms ? Math.round(s.avg_latency_ms).toString() : "—"}
-        suffix="ms"
+        value={duration(s.avg_latency_ms)}
         icon={Zap}
         detail="End-to-end request duration"
         loading={!ready || busy}
@@ -404,8 +444,15 @@ export default function Dashboard() {
       />
     </div>
   );
+  if (!ready)
+    return (
+      <main className="initial-loading" aria-busy="true">
+        <h1>Loading your workspace…</h1>
+        <Skeleton className="skeleton-chart" />
+      </main>
+    );
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-accent={site.accent}>
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
@@ -436,9 +483,12 @@ export default function Dashboard() {
           className="brand"
           onClick={() => navigate("overview")}
         >
-          <span className="brand-mark">N</span>
+          <span className="brand-mark">
+            {site.site_name.slice(0, 1).toUpperCase()}
+          </span>
           <span>
-            nexus<span className="brand-period">.</span>
+            {site.site_name.toLowerCase()}
+            <span className="brand-period">.</span>
           </span>
           <Badge>GATEWAY</Badge>
         </a>
@@ -472,6 +522,17 @@ export default function Dashboard() {
             </a>
           ))}
         </nav>
+        {user?.is_admin && (
+          <a
+            href="#admin"
+            onClick={() => setMobile(false)}
+            className={`nav-link ${view === "admin" ? "selected" : ""}`}
+            aria-current={view === "admin" ? "page" : undefined}
+          >
+            <ShieldCheck size={18} />
+            Administration
+          </a>
+        )}
         <div className="sidebar-bottom">
           <a
             className={`nav-link ${view === "docs" ? "selected" : ""}`}
@@ -503,6 +564,7 @@ export default function Dashboard() {
                         setUser(null);
                         setDemo(true);
                         setSecret("");
+                        setPlaygroundModel(null);
                         notify("Signed out");
                       })
                       .catch((e) => notify(e.message, "error"));
@@ -522,7 +584,10 @@ export default function Dashboard() {
               className="icon-button menu-toggle"
               aria-controls="workspace-navigation"
               aria-expanded={mobile}
-              onClick={() => setMobile(true)}
+              onClick={() => {
+                if (!window.matchMedia("(min-width: 1024px)").matches)
+                  setMobile(true);
+              }}
               aria-label="Open navigation"
             >
               <Menu size={22} />
@@ -610,10 +675,47 @@ export default function Dashboard() {
                   </button>
                 </div>
               </div>
+              {demo && (
+                <div className="workspace-notice">
+                  <span>
+                    You're exploring sample data. Sign in to connect providers
+                    or try community models.
+                  </span>
+                  <button
+                    className="text-button"
+                    onClick={() => setAuthOpen(true)}
+                  >
+                    Open your workspace <ArrowRight size={15} />
+                  </button>
+                </div>
+              )}
+              {!demo && !busy && !s.requests && (
+                <div className="onboarding panel">
+                  <div>
+                    <h2>Make your first request</h2>
+                    <p>
+                      Choose a community model in the Playground, or connect
+                      your own provider.
+                    </p>
+                  </div>
+                  <button
+                    className="button primary"
+                    onClick={() => navigate("playground")}
+                  >
+                    Open Playground <ArrowRight size={15} />
+                  </button>
+                  <button className="button" onClick={() => navigate("keys")}>
+                    View your API keys
+                  </button>
+                </div>
+              )}
               <div className="operational-strip">
                 <span>
                   <span className="dot" />
-                  {p.filter((x) => x.enabled).length} enabled connections
+                  {p.filter((x) => x.enabled).length} enabled{" "}
+                  {p.filter((x) => x.enabled).length === 1
+                    ? "connection"
+                    : "connections"}
                 </span>
                 <span>
                   <ShieldCheck size={14} />
@@ -670,7 +772,11 @@ export default function Dashboard() {
                     </div>
                     <Network size={18} className="muted" />
                   </div>
-                  <Topology providers={p} demo={demo} />
+                  <Topology
+                    providers={p}
+                    demo={demo}
+                    siteName={site.site_name}
+                  />
                 </section>
               </div>
               <section className="panel providers-overview">
@@ -854,6 +960,10 @@ export default function Dashboard() {
                     {provider.discovery_error && (
                       <Banner tone="error">{provider.discovery_error}</Banner>
                     )}
+                    <p className="form-note provider-health-note">
+                      Connection health reflects recent routing state;
+                      individual models may have different access or limits.
+                    </p>
                     <div className="provider-card-refreshed">
                       Catalog refreshed {stamp(provider.discovered_at)}
                     </div>
@@ -983,7 +1093,7 @@ export default function Dashboard() {
                   <Search size={17} />
                   <input
                     aria-label="Search models"
-                    placeholder="Search models by name or ID…"
+                    placeholder="Search models…"
                     value={search}
                     onChange={(e) => {
                       setSearch(e.target.value);
@@ -1004,6 +1114,17 @@ export default function Dashboard() {
                   )}
                 </button>
                 <div className="filter-controls" id="model-filter-controls">
+                  <label className="check-label">
+                    <input
+                      type="checkbox"
+                      checked={freeOnly}
+                      onChange={(e) => {
+                        setFreeOnly(e.target.checked);
+                        setModelPage(0);
+                      }}
+                    />
+                    Free only
+                  </label>
                   <select
                     aria-label="Filter capability"
                     value={capability}
@@ -1048,7 +1169,7 @@ export default function Dashboard() {
               </div>
               <div className="table-note">
                 <span>
-                  {demo ? displayedModels.length : totalModels} models{" "}
+                  {demo ? displayedModels.length : explorerTotal} models{" "}
                   <span className="mid-dot">·</span> Prices in USD per million
                   tokens
                 </span>
@@ -1081,6 +1202,9 @@ export default function Dashboard() {
                                   {model.model_id}
                                 </small>
                                 <span>{model.provider_name}</span>
+                                {model.shared && (
+                                  <Badge tone="green">Community · Free</Badge>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -1121,9 +1245,26 @@ export default function Dashboard() {
                           >
                             <div className="row-actions">
                               <button
+                                className="icon-button"
+                                aria-label={`Try ${model.name} in Playground`}
+                                title="Try in Playground"
+                                disabled={
+                                  !model.enabled ||
+                                  !model.available ||
+                                  model.capabilities.chat === false
+                                }
+                                onClick={() => {
+                                  setPlaygroundModel(model);
+                                  navigate("playground");
+                                }}
+                              >
+                                <Terminal size={16} />
+                              </button>
+                              <button
                                 className={`icon-button ${model.favorite ? "accent" : ""}`}
                                 aria-label={`Favorite ${model.name}`}
                                 aria-pressed={model.favorite}
+                                disabled={model.owned === false}
                                 onClick={() =>
                                   requireAccount(
                                     () =>
@@ -1144,6 +1285,7 @@ export default function Dashboard() {
                               <button
                                 className="icon-button"
                                 aria-label={`Configure ${model.name}`}
+                                disabled={model.owned === false}
                                 onClick={() =>
                                   requireAccount(() => setModelModal(model))
                                 }
@@ -1181,7 +1323,7 @@ export default function Dashboard() {
                   <Pagination
                     page={modelPage}
                     size={100}
-                    total={demo ? displayedModels.length : totalModels}
+                    total={demo ? displayedModels.length : explorerTotal}
                     setPage={setModelPage}
                   />
                 </div>
@@ -1190,12 +1332,15 @@ export default function Dashboard() {
           )}
           {view === "playground" && (
             <Playground
+              key={user?.id || "demo"}
               demo={demo}
               providers={p}
               models={m}
               requireAccount={requireAccount}
               notify={notify}
               onFinish={load}
+              initialModel={playgroundModel}
+              defaults={site}
             />
           )}
           {view === "keys" && (
@@ -1218,7 +1363,12 @@ export default function Dashboard() {
                 <span>
                   Keys are shown only once. Save each new key before closing.
                 </span>
-                <Badge>{k.filter((key) => !key.revoked).length} keys</Badge>
+                <Badge>
+                  {k.filter((key) => !key.revoked).length}{" "}
+                  {k.filter((key) => !key.revoked).length === 1
+                    ? "key"
+                    : "keys"}
+                </Badge>
               </div>
               <section className="panel table-panel">
                 <div className="table-scroll">
@@ -1360,16 +1510,20 @@ export default function Dashboard() {
               <section className="panel">
                 <RequestTable
                   logs={
-                    errorsOnly && demo ? l.filter((x) => x.status >= 400) : l
+                    demo
+                      ? errorsOnly
+                        ? l.filter((x) => x.status >= 400)
+                        : l
+                      : requestLogs
                   }
                   onSelect={setSelectedLog}
                 />
                 <div className="table-footer">
-                  <span>{demo ? l.length : totalLogs} requests</span>
+                  <span>{demo ? l.length : requestTotal} requests</span>
                   <Pagination
                     page={logPage}
                     size={25}
-                    total={demo ? l.length : totalLogs}
+                    total={demo ? l.length : requestTotal}
                     setPage={setLogPage}
                   />
                 </div>
@@ -1462,10 +1616,41 @@ export default function Dashboard() {
           {view === "docs" && (
             <Documentation endpoint={endpoint} notify={notify} />
           )}
+          {view === "admin" &&
+            (user?.is_admin ? (
+              <AdminPanel
+                user={user}
+                onSettings={setSite}
+                notify={notify}
+                onConnect={() => setProviderModal("new")}
+                onRegisterModel={() => setModelModal("new")}
+                revision={revision}
+              />
+            ) : (
+              <>
+                <PageHeading
+                  title="Administration"
+                  subtitle="Restricted to administrator accounts."
+                />
+                <Empty
+                  title="Administrator access required"
+                  headingLevel={2}
+                  text={
+                    demo
+                      ? "Sign in with your administrator account to manage the site."
+                      : "Your account does not have an administrator role. Roles are granted on the gateway server."
+                  }
+                  action={demo ? "Sign in" : undefined}
+                  onAction={() => setAuthOpen(true)}
+                />
+              </>
+            ))}
           <footer className="page-footer">
             <span>
-              <span className="brand-mark tiny">N</span>Nexus · Universal AI
-              Gateway
+              <span className="brand-mark tiny">
+                {site.site_name.slice(0, 1).toUpperCase()}
+              </span>
+              {site.site_name} · {site.tagline}
             </span>
             <span>
               {demo
@@ -1499,9 +1684,11 @@ export default function Dashboard() {
       )}
       {authOpen && (
         <AuthForm
+          site={site}
           onClose={() => setAuthOpen(false)}
           onSuccess={(newUser, key) => {
             setUser(newUser);
+            setPlaygroundModel(null);
             setDemo(false);
             setAuthOpen(false);
             if (key) setSecret(key);
@@ -1616,7 +1803,7 @@ export default function Dashboard() {
           <div className="modal-body form">
             <div className="detail-summary">
               <Badge tone={selectedLog.status < 400 ? "green" : "amber"}>
-                HTTP {selectedLog.status}
+                Gateway HTTP {selectedLog.status}
               </Badge>
               <code>{selectedLog.id}</code>
               <CopyButton value={selectedLog.id} onCopy={notify} />
@@ -1632,7 +1819,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <dt>Latency</dt>
-                <dd>{Math.round(selectedLog.latency_ms)} ms</dd>
+                <dd>{duration(selectedLog.latency_ms)}</dd>
               </div>
               <div>
                 <dt>Tokens · input / output</dt>
@@ -1661,9 +1848,9 @@ export default function Dashboard() {
                     <small>{a.model}</small>
                   </div>
                   <Badge tone={a.status < 400 ? "green" : "amber"}>
-                    {a.status}
+                    Provider HTTP {a.status}
                   </Badge>
-                  <span className="mono">{Math.round(a.latency_ms)} ms</span>
+                  <span className="mono">{duration(a.latency_ms)}</span>
                 </div>
               ))}
               {!selectedLog.attempts.length && (
@@ -1671,7 +1858,18 @@ export default function Dashboard() {
               )}
             </div>
             {selectedLog.error_code && (
-              <Banner tone="error">{selectedLog.error_code}</Banner>
+              <Banner tone="error">
+                <span>
+                  {errorGuidance(
+                    selectedLog.attempts.at(-1)?.status || selectedLog.status,
+                    selectedLog.error_code,
+                  )}
+                </span>
+                <details>
+                  <summary>Technical details</summary>
+                  <code>{selectedLog.error_code}</code>
+                </details>
+              </Banner>
             )}
           </div>
         </Modal>

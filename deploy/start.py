@@ -163,6 +163,19 @@ try:
         ],
         check=True,
     )
+    # A server operator can promote an existing account without exposing a public setup route.
+    # Remove this variable after the first successful activation.
+    if os.environ.get("ADMIN_BOOTSTRAP_EMAIL"):
+        subprocess.run(
+            [
+                sys.executable,
+                "scripts/admin.py",
+                "grant",
+                "--email",
+                os.environ["ADMIN_BOOTSTRAP_EMAIL"],
+            ],
+            check=True,
+        )
     api = subprocess.Popen(
         [
             sys.executable,
