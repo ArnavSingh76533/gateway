@@ -40,5 +40,5 @@ jobs:
           readme.write_text(metadata + readme.read_text())
           PY
           hf upload shivamkr00902/data2 . . --repo-type space \
-            --exclude '.git/**' '.github/**' \
+            --exclude '.git/**' --exclude '.github/**' \
             --commit-message "Deploy gateway ${GITHUB_SHA}"
