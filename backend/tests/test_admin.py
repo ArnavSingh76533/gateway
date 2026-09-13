@@ -259,3 +259,18 @@ async def test_full_catalog_search_includes_last_page_and_free_models(environmen
     assert len({m["id"] for m in first["data"] + last["data"]}) == 1206
     result = (await client.get("/api/models?search=Model%201204&free_only=true")).json()
     assert result["total"] == 1 and result["data"][0]["model_id"] == "catalog-1204"
+
+
+async def test_upstream_credit_error_is_actionable_without_leaking_details(environment):
+    _, client, upstream = environment
+    await register(client)
+    await connect(client)
+    upstream.statuses["first.example.com"] = 402
+    response = await client.post(
+        "/api/playground",
+        json={"model": "model-a", "messages": [{"role": "user", "content": "hello"}]},
+    )
+    assert response.status_code == 502
+    assert "HTTP 402" in response.json()["error"]["message"]
+    assert "billing" in response.json()["error"]["message"]
+    assert "LEAK" not in response.text and "upstream-provider-key" not in response.text

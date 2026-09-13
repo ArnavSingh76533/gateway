@@ -533,9 +533,19 @@ class Execution:
             else (last_error.status if last_error.status in (400, 404, 422, 504) else 502)
         )
         await self.record(status, last_error.code)
+        guidance = {
+            401: "The provider rejected its credential (HTTP 401). Update the provider connection.",
+            403: "The provider denied this model (HTTP 403). Check model access and permissions.",
+            402: "The provider requires credit or payment (HTTP 402). Check billing and model access.",
+            429: "The provider rate limit was reached (HTTP 429). Wait or select another model.",
+            504: "The provider timed out. Retry later or select a faster model.",
+        }.get(last_error.status)
+        if guidance and self.current and self.current.provider.user_id != self.principal.user_id:
+            guidance += " For a community model, contact the gateway administrator."
         raise fail(
             status,
-            "Upstream request failed. Inspect the request ID in your dashboard; provider response details are redacted.",
+            guidance
+            or "Upstream request failed. Open request details to inspect the provider attempts.",
             last_error.code,
         )
 
