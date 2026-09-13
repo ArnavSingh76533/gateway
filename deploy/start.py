@@ -163,19 +163,22 @@ try:
         ],
         check=True,
     )
-    # A server operator can promote an existing account without exposing a public setup route.
-    # Remove this variable after the first successful activation.
+    # Server-only provisioning runs before the public application accepts requests.
+    # A password-hash seed can recreate the owner after an explicitly accepted data reset.
     if os.environ.get("ADMIN_BOOTSTRAP_EMAIL"):
         subprocess.run(
             [
                 sys.executable,
                 "scripts/admin.py",
-                "grant",
+                "bootstrap",
                 "--email",
                 os.environ["ADMIN_BOOTSTRAP_EMAIL"],
             ],
             check=True,
         )
+    # The web worker does not need access to the operator's provisioning secrets.
+    os.environ.pop("ADMIN_BOOTSTRAP_PASSWORD_HASH", None)
+    os.environ.pop("ADMIN_BOOTSTRAP_EMAIL", None)
     api = subprocess.Popen(
         [
             sys.executable,

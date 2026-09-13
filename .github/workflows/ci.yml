@@ -43,6 +43,11 @@ jobs:
           exit 1
       - name: Test server-only administrator activation
         run: |
+          HASH=$(docker exec gateway-ci python -c 'from app.security import password_hasher; print(password_hasher.hash("CI-only-bootstrap-password-123"))')
+          docker exec -e ADMIN_BOOTSTRAP_PASSWORD_HASH="$HASH" gateway-ci python scripts/admin.py bootstrap --email ci-bootstrap@example.com
+          curl --fail --silent http://localhost:7860/api/auth/login \
+            -H 'Origin: http://localhost:7860' -H 'Content-Type: application/json' \
+            --data '{"email":"ci-bootstrap@example.com","password":"CI-only-bootstrap-password-123"}' > /dev/null
           curl --fail --silent http://localhost:7860/api/auth/register \
             -H 'Origin: http://localhost:7860' -H 'Content-Type: application/json' \
             --data '{"email":"ci-admin@example.com","name":"CI Admin","password":"CI-only-test-password-123"}' > /dev/null

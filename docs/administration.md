@@ -2,7 +2,7 @@
 
 Open `https://YOUR-GATEWAY/#admin` and sign in with an existing administrator account. There is no separate admin password, default account, or public role-grant endpoint. Ordinary members receive HTTP 403 from every administration API, even if they open the URL directly. Session mutations also require the same-origin CSRF token.
 
-## Activate an existing account
+## Activate an administrator
 
 Deploy this version first. The container runs the database migration automatically before starting the application. Keep the existing encryption keys and database; changing encryption keys without rotation makes existing provider credentials unreadable.
 
@@ -15,7 +15,24 @@ docker exec YOUR_CONTAINER python scripts/admin.py list
 
 For a non-container installation, run `python scripts/admin.py grant --email owner@example.com` from the repository root using the application's Python environment and database configuration, after `python -m alembic -c backend/alembic.ini upgrade head`.
 
-For Hugging Face Spaces without a container terminal, add a Space **Secret** named `ADMIN_BOOTSTRAP_EMAIL` containing the exact email of an **already registered** account, then restart the updated Space. The startup supervisor grants that account's role after migrating. Remove this secret after the first successful activation; the role persists in the database. Leaving it set would grant the role again on later restarts. An unknown or suspended account stops startup with an explanatory error instead of creating a new account. Remove the secret to recover from a typo.
+For Hugging Face Spaces without a container terminal, add a Space **Secret** named `ADMIN_BOOTSTRAP_EMAIL` containing the exact email of an **already registered** account, then restart the updated Space. The startup supervisor grants that account's role after migrating. With persistent database storage, remove this secret after the first successful activation; the role persists in the database. Leaving it set would grant the role again on later restarts. A suspended account is never restored automatically. An unknown account requires the explicit password-hash seed described below; otherwise startup stops without creating it. Remove the secret to recover from a typo.
+
+### Fresh database after an approved reset
+
+Set two private Space secrets before starting the updated application:
+
+- `ADMIN_BOOTSTRAP_EMAIL`: the exact administrator email.
+- `ADMIN_BOOTSTRAP_PASSWORD_HASH`: an Argon2id hash of your chosen password, generated locally. No plaintext password or default password is placed in the repository.
+
+Generate a hash in your gateway Python environment with:
+
+```sh
+python -c "from argon2 import PasswordHasher; from getpass import getpass; print(PasswordHasher(time_cost=3, memory_cost=65536, parallelism=2).hash(getpass('Admin password: ')))"
+```
+
+Copy only the generated hash into the private secret. On an empty database, startup creates that one administrator before accepting public requests. On an existing database, it keeps the account's password and data. The web worker does not inherit these bootstrap secrets. The equivalent server command is `python scripts/admin.py bootstrap --email owner@example.com` with the hash environment variable set.
+
+On ephemeral storage, keep both secrets if you want this admin login recreated after later resets. This does **not** preserve provider connections, other users, site settings, published models, or request history. Use durable PostgreSQL to retain those. Once durable storage is configured, remove both bootstrap secrets so later role revocation cannot be undone by a restart.
 
 Refresh the gateway after activation. **Administration** appears in the sidebar. Use the account's existing password. Public signup ignores client-supplied role fields and never promotes users.
 

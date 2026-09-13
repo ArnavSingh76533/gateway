@@ -1,26 +1,27 @@
-"""Grant/revoke a role for an existing account using access to the gateway server."""
+"""Manage administrator roles using access to the gateway server."""
 
 import argparse
 import asyncio
 import os
 from pathlib import Path
 
-from sqlalchemy import select
-
+from app.admin_bootstrap import provision_admin
 from app.config import Settings
 from app.db import create_database
-from app.models import AuditLog, User
+from app.models import User
+from sqlalchemy import select
 
 
 async def run() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["grant", "revoke", "list"])
+    parser.add_argument("action", choices=["grant", "revoke", "list", "bootstrap"])
     parser.add_argument(
-        "--email", help="Exact email of an existing account; no account is created"
+        "--email",
+        help="Exact account email; only bootstrap with a server seed can create it",
     )
     args = parser.parse_args()
     if args.action != "list" and not args.email:
-        parser.error("--email is required for grant/revoke")
+        parser.error("--email is required for grant/revoke/bootstrap")
     # docker exec does not inherit variables set inside deploy/start.py.
     root = Path(os.environ.get("DATA_DIR", "/data"))
     if (
@@ -41,31 +42,22 @@ async def run() -> None:
                 ):
                     print(f"{user.email} — administrator")
                 return
-            user = await db.scalar(
-                select(User).where(User.email == args.email.strip().lower())
-            )
-            if not user:
+            try:
+                user = await provision_admin(
+                    db,
+                    args.email,
+                    args.action,
+                    os.environ.get("ADMIN_BOOTSTRAP_PASSWORD_HASH"),
+                )
+            except ValueError:
                 raise SystemExit(
-                    "Account not found. Sign up on this gateway first; no account was created."
-                )
-            if user.disabled and args.action == "grant":
-                raise SystemExit(
-                    "Restore this account before granting administrator access."
-                )
-            user.is_admin = args.action == "grant"
-            db.add(
-                AuditLog(
-                    user_id=user.id,
-                    action=f"admin.role.{args.action}",
-                    target_id=user.id,
-                )
-            )
-            await db.commit()
+                    "Admin provisioning failed: check the existing account, suspension status, and bootstrap hash configuration. No password was changed."
+                ) from None
             print(
                 f"Administrator role {'granted to' if user.is_admin else 'revoked from'} {user.email}."
             )
             print(
-                "Sign in with the existing account password at /#admin. No password was changed."
+                "Sign in at /#admin with the account password. Existing passwords are never changed."
             )
     finally:
         await db_factory.kw["bind"].dispose()
