@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Terminal,
   Settings2,
@@ -11,7 +11,11 @@ import {
   LoaderCircle,
   RefreshCw,
 } from "lucide-react";
-import { ApiError, csrf, Model, Provider } from "@/lib/api";
+import { ApiError, csrf, loadAllModels, Model, Provider } from "@/lib/api";
+import { SiteOptions, defaultSite } from "@/lib/site";
+import { errorGuidance } from "@/lib/errors";
+import ModelPicker from "./model-picker";
+import MarkdownOutput from "./markdown-output";
 import { Badge, Banner, CopyButton, PageHeading, Toggle } from "./ui";
 const modes = [
   "auto",
@@ -29,6 +33,9 @@ export default function Playground({
   requireAccount,
   notify,
   onFinish,
+  initialModel = null,
+  defaults = defaultSite,
+  loadCatalog = loadAllModels,
 }: {
   demo: boolean;
   providers: Provider[];
@@ -36,6 +43,9 @@ export default function Playground({
   requireAccount: (fn: () => void) => void;
   notify: (s: string) => void;
   onFinish: () => Promise<void>;
+  initialModel?: Model | null;
+  defaults?: SiteOptions;
+  loadCatalog?: (signal?: AbortSignal) => Promise<Model[]>;
 }) {
   const [prompt, setPrompt] = useState(
       "Explain how an AI gateway routes a request in three clear steps.",
@@ -43,19 +53,76 @@ export default function Playground({
     [system, setSystem] = useState(
       "You are a helpful assistant. Be concise and accurate.",
     ),
-    [mode, setMode] = useState("auto"),
+    [mode, setMode] = useState(initialModel ? "manual" : defaults.default_mode),
     [provider, setProvider] = useState(""),
-    [model, setModel] = useState("auto"),
-    [stream, setStream] = useState(true),
+    [selectedModel, setSelectedModel] = useState<Model | null>(initialModel),
+    [stream, setStream] = useState(defaults.default_stream),
     [output, setOutput] = useState(""),
     [running, setRunning] = useState(false),
     [info, setInfo] = useState(""),
     [alternatives, setAlternatives] = useState(false),
-    [retries, setRetries] = useState(2);
+    [retries, setRetries] = useState(defaults.default_retries);
+  const model = selectedModel?.route_id || "auto";
+  const [catalog, setCatalog] = useState(models);
+  const [catalogLoading, setCatalogLoading] = useState(!demo);
+  const [catalogError, setCatalogError] = useState("");
+  const [rawView, setRawView] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [firstToken, setFirstToken] = useState<number | null>(null);
+  const startedAt = useRef(0);
+  const seedModels = useRef(models);
+  seedModels.current = models;
+  const catalogController = useRef<AbortController | null>(null);
+  const reloadCatalog = useCallback(() => {
+    catalogController.current?.abort();
+    if (demo) {
+      setCatalog(seedModels.current);
+      setCatalogLoading(false);
+      return;
+    }
+    const pending = new AbortController();
+    catalogController.current = pending;
+    setCatalogLoading(true);
+    setCatalogError("");
+    void loadCatalog(pending.signal)
+      .then((all) => {
+        if (!pending.signal.aborted) setCatalog(all);
+      })
+      .catch((error: Error) => {
+        if (!pending.signal.aborted) setCatalogError(error.message);
+      })
+      .finally(() => {
+        if (!pending.signal.aborted) setCatalogLoading(false);
+      });
+  }, [demo, loadCatalog]);
+  useEffect(() => {
+    reloadCatalog();
+    return () => catalogController.current?.abort();
+  }, [reloadCatalog]);
+  const missingManualModel = mode === "manual" && !selectedModel;
+  const currentSelection = catalog.find((m) => m.id === selectedModel?.id);
+  const unavailableSelection =
+    !!selectedModel &&
+    !catalogLoading &&
+    (!currentSelection ||
+      !currentSelection.enabled ||
+      !currentSelection.available ||
+      currentSelection.capabilities.chat === false);
+  const canSend =
+    !!prompt.trim() && !missingManualModel && !unavailableSelection;
+  useEffect(() => {
+    if (!running) return;
+    const timer = setInterval(
+      () => setElapsed((performance.now() - startedAt.current) / 1000),
+      250,
+    );
+    return () => clearInterval(timer);
+  }, [running]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [requestError, setRequestError] = useState<{
     message: string;
     status?: number;
+    code?: string;
   } | null>(null);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => {
@@ -67,12 +134,16 @@ export default function Playground({
   }, []);
   useEffect(() => () => controller.current?.abort(), []);
   async function run() {
+    if (!canSend || running) return;
     setRunning(true);
     setOutput("");
     setRequestError(null);
     setInfo("Connecting to your gateway…");
     controller.current = new AbortController();
     const started = performance.now();
+    startedAt.current = started;
+    setElapsed(0);
+    setFirstToken(null);
     try {
       const body = {
         model:
@@ -103,6 +174,7 @@ export default function Playground({
         throw new ApiError(
           e?.error?.message || "The gateway could not complete this request.",
           response.status,
+          e?.error?.code,
         );
       }
       setInfo(
@@ -133,7 +205,12 @@ export default function Playground({
             const data = JSON.parse(raw);
             if (data.error) throw new Error(data.error.message);
             const delta = data.choices?.[0]?.delta;
-            if (delta?.content) setOutput((prev) => prev + delta.content);
+            if (delta?.content) {
+              setFirstToken(
+                (prev) => prev ?? (performance.now() - started) / 1000,
+              );
+              setOutput((prev) => prev + delta.content);
+            }
             if (delta?.tool_calls)
               setOutput(
                 (prev) =>
@@ -159,10 +236,12 @@ export default function Playground({
         setRequestError({
           message: (err as Error).message,
           status: err instanceof ApiError ? err.status : undefined,
+          code: err instanceof ApiError ? err.code : undefined,
         });
       }
     } finally {
       setRunning(false);
+      setElapsed((performance.now() - started) / 1000);
       void onFinish();
     }
   }
@@ -209,7 +288,11 @@ export default function Playground({
           >
             <label>
               Routing strategy
-              <select value={mode} onChange={(e) => setMode(e.target.value)}>
+              <select
+                disabled={running}
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+              >
                 {modes
                   .filter((x) => !["image", "embedding"].includes(x))
                   .map((x) => (
@@ -222,10 +305,11 @@ export default function Playground({
             <label>
               Provider
               <select
+                disabled={running}
                 value={provider}
                 onChange={(e) => {
                   setProvider(e.target.value);
-                  setModel("auto");
+                  setSelectedModel(null);
                 }}
               >
                 <option value="">All enabled providers</option>
@@ -238,29 +322,30 @@ export default function Playground({
                   ))}
               </select>
             </label>
-            <label>
-              Model
-              <select value={model} onChange={(e) => setModel(e.target.value)}>
-                <option value="auto">Auto-select a model</option>
-                {models
-                  .filter(
-                    (m) =>
-                      (!provider || m.provider_id === provider) &&
-                      m.capabilities.chat !== false,
-                  )
-                  .map((m) => (
-                    <option
-                      key={m.id}
-                      value={provider ? m.model_id : m.route_id}
-                    >
-                      {m.name} · {m.provider_name}
-                    </option>
-                  ))}
-              </select>
-            </label>
+            <ModelPicker
+              models={catalog}
+              selected={selectedModel}
+              onSelect={setSelectedModel}
+              provider={provider}
+              manual={mode === "manual"}
+              loading={catalogLoading}
+              error={catalogError}
+              onRefresh={reloadCatalog}
+              disabled={running}
+            />
+            {missingManualModel && (
+              <p className="field-error">Choose a model for manual routing.</p>
+            )}
+            {unavailableSelection && (
+              <p className="field-error">
+                The selected model is no longer available. Choose another model
+                or refresh the catalog.
+              </p>
+            )}
             <label>
               Retry budget
               <select
+                disabled={running}
                 value={retries}
                 onChange={(e) => setRetries(Number(e.target.value))}
               >
@@ -274,16 +359,20 @@ export default function Playground({
             <Toggle
               label="Stream response"
               checked={stream}
-              onChange={setStream}
+              onChange={(value) => {
+                if (!running) setStream(value);
+              }}
             />
             <Toggle
               label="Allow alternative models"
               checked={alternatives}
-              onChange={setAlternatives}
+              onChange={(value) => {
+                if (!running) setAlternatives(value);
+              }}
             />
             <p className="form-note">
-              Your server’s retry limit is the upper bound. Provider selection
-              stays pinned. Alternatives require confirmed capabilities.
+              Retry failed attempts up to this limit. Enable alternatives to
+              allow a compatible model when your first choice fails.
             </p>
           </div>
         </section>
@@ -300,6 +389,7 @@ export default function Playground({
               <label>
                 <span className="sr-only">System instruction</span>
                 <textarea
+                  disabled={running}
                   rows={2}
                   value={system}
                   onChange={(e) => setSystem(e.target.value)}
@@ -309,6 +399,7 @@ export default function Playground({
             <label>
               Your message
               <textarea
+                disabled={running}
                 rows={5}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -316,7 +407,7 @@ export default function Playground({
                   if (
                     (e.ctrlKey || e.metaKey) &&
                     e.key === "Enter" &&
-                    prompt.trim() &&
+                    canSend &&
                     !running
                   ) {
                     e.preventDefault();
@@ -345,7 +436,7 @@ export default function Playground({
               ) : (
                 <button
                   className="button primary"
-                  disabled={!prompt.trim()}
+                  disabled={!canSend}
                   onClick={() => requireAccount(() => void run())}
                 >
                   <ArrowUp size={17} />
@@ -359,18 +450,42 @@ export default function Playground({
               <Sparkles size={16} />
               <h3>Response</h3>
             </div>
-            {output && <CopyButton value={output} onCopy={notify} />}
+            {output && (
+              <div className="response-actions">
+                <div className="response-format" aria-label="Response format">
+                  <button
+                    aria-pressed={!rawView}
+                    className={!rawView ? "active" : ""}
+                    onClick={() => setRawView(false)}
+                  >
+                    Formatted
+                  </button>
+                  <button
+                    aria-pressed={rawView}
+                    className={rawView ? "active" : ""}
+                    onClick={() => setRawView(true)}
+                  >
+                    Raw
+                  </button>
+                </div>
+                <CopyButton value={output} onCopy={notify} />
+              </div>
+            )}
           </div>
           <div
             className={`response-output ${!output ? "no-output" : ""}`}
             aria-busy={running}
           >
             {output ? (
-              <pre className={running ? "streaming" : ""}>{output}</pre>
+              rawView ? (
+                <pre className="raw-output">{output}</pre>
+              ) : (
+                <MarkdownOutput text={output} notify={notify} />
+              )
             ) : running ? (
               <span>
                 <LoaderCircle size={18} className="spin" />
-                Waiting for the provider…
+                Waiting for the first token… {elapsed.toFixed(1)} s
               </span>
             ) : (
               <span>
@@ -397,14 +512,21 @@ export default function Playground({
                     : "Request error"}
                 </strong>
                 <span>{requestError.message}</span>
-                <button
-                  className="text-button"
-                  disabled={running}
-                  onClick={() => requireAccount(() => void run())}
-                >
-                  <RefreshCw size={14} />
-                  Retry request
-                </button>
+                <span>
+                  {errorGuidance(requestError.status, requestError.code)}
+                </span>
+                {(!requestError.status ||
+                  requestError.status >= 500 ||
+                  requestError.status === 429) && (
+                  <button
+                    className="text-button"
+                    disabled={running}
+                    onClick={() => requireAccount(() => void run())}
+                  >
+                    <RefreshCw size={14} />
+                    Retry request
+                  </button>
+                )}
                 <button
                   className="text-button"
                   onClick={() => setSettingsOpen(true)}
@@ -418,6 +540,16 @@ export default function Playground({
             <div className="response-info mono" role="status">
               {running && <LoaderCircle className="spin" size={14} />}
               {info}
+              {running && (
+                <span>
+                  {" "}
+                  · {output ? "Receiving response" : "Waiting"} ·{" "}
+                  {elapsed.toFixed(1)} s
+                </span>
+              )}
+              {firstToken !== null && (
+                <span> · First token {firstToken.toFixed(1)} s</span>
+              )}
             </div>
           )}
         </section>

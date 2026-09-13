@@ -370,7 +370,9 @@ describe("Authenticated workspace actions", () => {
     const { user, fetcher } = await mounted(true);
     await go("models");
     await user.click(
-      screen.getByRole("button", { name: `Favorite ${demoModels[0].name}` }),
+      await screen.findByRole("button", {
+        name: `Favorite ${demoModels[0].name}`,
+      }),
     );
     await waitFor(() =>
       expect(fetcher).toHaveBeenCalledWith(

@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import Integer, case, cast, func, select
+from sqlalchemy import Integer, case, cast, func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from .auth import DB, CurrentUser, issue_key
@@ -15,6 +15,7 @@ from .models import AuditLog, GatewayKey, Provider, RegistryModel, RequestLog
 from .providers import ADAPTERS
 from .schemas import ModelInput, NewGatewayKey, ProviderInput, ProviderPatch
 from .security import validate_base_url, validate_headers
+from .site_config import published_ids, site_options
 
 router = APIRouter(prefix="/api", tags=["Dashboard"])
 
@@ -166,13 +167,32 @@ async def models(
     search: str = "",
     capability: str = "",
     provider: str = "",
+    free_only: bool = False,
+    owned_only: bool = False,
     limit: int = Query(200, ge=1, le=1000),
     offset: int = Query(0, ge=0),
 ) -> dict:
-    query = select(RegistryModel, Provider).join(Provider).where(Provider.user_id == user.id)
+    options = await site_options(db, request.app.state.settings)
+    shared = set(await db.scalars(published_ids())) if options.shared_models_enabled else set()
+    visible = Provider.user_id == user.id
+    if not owned_only:
+        visible = or_(visible, RegistryModel.id.in_(shared))
+    query = select(RegistryModel, Provider).join(Provider).where(visible)
     if search:
+        term = search[:120]
         query = query.where(
-            RegistryModel.model_id.ilike("%" + search.replace("%", "").replace("_", "")[:120] + "%")
+            or_(
+                RegistryModel.model_id.icontains(term, autoescape=True),
+                RegistryModel.name.icontains(term, autoescape=True),
+                Provider.name.icontains(term, autoescape=True),
+            )
+        )
+    if free_only:
+        query = query.where(
+            or_(
+                (RegistryModel.input_price == 0) & (RegistryModel.output_price == 0),
+                RegistryModel.id.in_(shared) & (Provider.user_id != user.id),
+            )
         )
     if provider:
         query = query.where(Provider.id == provider)
@@ -197,7 +217,7 @@ async def models(
     total = await db.scalar(select(func.count()).select_from(query.subquery()))
     rows = (
         await db.execute(
-            query.order_by(RegistryModel.favorite.desc(), RegistryModel.model_id)
+            query.order_by(RegistryModel.favorite.desc(), RegistryModel.model_id, RegistryModel.id)
             .limit(limit)
             .offset(offset)
         )
@@ -215,7 +235,11 @@ async def models(
             enabled=p.enabled,
             route_id=p.id + "::" + m.model_id,
             health=await request.app.state.shared.health(p.id + ":" + m.id),
+            shared=m.id in shared and p.user_id != user.id,
+            owned=p.user_id == user.id,
         )
+        if p.user_id != user.id:
+            item.update(input_price=0, output_price=0, provider_name="Community", favorite=False)
         result.append(item)
     return {"data": result, "total": total, "offset": offset, "limit": limit}
 

@@ -266,11 +266,15 @@ scripts/                 Secret setup and credential rotation
 deploy/                  Rootless supervisor, hosting templates, Caddy
 ```
 
+## Restricted administration and community models
+
+The `/#admin` panel manages branding, Playground defaults, registration and request limits, user suspension, and explicitly published chat models. Roles require server access; public signup cannot create an administrator. See [Administration guide](docs/administration.md) for activation, deployment, publishing your own model, and revocation.
+
 ## Scope and operational limits
 
-This v1 implements the requested core and selected providers. Favorites, pins, model search and usage export are included. Automated paid benchmarks, public leaderboards, webhooks, an admin UI, saved prompt templates and prompt replay are **not included**. Prompt replay would require an explicit opt-in content-retention design; this version never logs prompts or completions.
+This v1 implements the requested core and selected providers. Favorites, pins, model search and usage export are included. Automated paid benchmarks, public leaderboards, webhooks, saved prompt templates and prompt replay are **not included**. Prompt replay would require an explicit opt-in content-retention design; this version never logs prompts or completions.
 
-Prices/capabilities depend on provider metadata and manual configuration. Catalog-listed does not guarantee your account has quota or access. Free-tier usage is still subject to each provider’s rules, credits and rate limits. No shared provider credentials or free quota bypass is provided. Usage costs are partial estimates, not billing records.
+Prices/capabilities depend on provider metadata and manual configuration. Catalog-listed does not guarantee your account has quota or access. Free-tier usage is still subject to each provider’s rules, credits and rate limits. Administrators can explicitly publish selected chat models for community use. Credentials remain encrypted on the server; the administrator covers upstream charges. No provider quota bypass is provided. Usage costs are partial estimates, not billing records.
 
 This is a production-oriented initial implementation, not an assertion of independent security audit, live-provider certification, load-tested capacity or high availability. The included single-container database topology is a single node. Use external database services and backups for stronger availability requirements.
 

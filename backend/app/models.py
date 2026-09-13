@@ -2,7 +2,17 @@ import time
 import uuid
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    false,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -18,6 +28,25 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(Text)
     name: Mapped[str] = mapped_column(String(80))
+    created_at: Mapped[float] = mapped_column(Float, default=time.time)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    disabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+
+
+class SiteConfiguration(Base):
+    __tablename__ = "site_configuration"
+    id: Mapped[str] = mapped_column(String(16), primary_key=True, default="global")
+    settings: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class PublishedModel(Base):
+    __tablename__ = "published_models"
+    model_id: Mapped[str] = mapped_column(
+        ForeignKey("registry_models.id", ondelete="CASCADE"), primary_key=True
+    )
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    requests_per_minute: Mapped[int] = mapped_column(Integer, default=5)
+    max_output_tokens: Mapped[int] = mapped_column(Integer, default=1024)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
 
 
@@ -94,6 +123,7 @@ class RequestLog(Base):
     input_tokens: Mapped[int | None] = mapped_column(Integer)
     output_tokens: Mapped[int | None] = mapped_column(Integer)
     estimated_cost: Mapped[float | None] = mapped_column(Float)
+    sponsored_cost: Mapped[float | None] = mapped_column(Float)
     attempts: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     error_code: Mapped[str | None] = mapped_column(String(80))
     created_at: Mapped[float] = mapped_column(Float, default=time.time, index=True)
