@@ -180,7 +180,9 @@ export function money(value: number | null | undefined): string {
 }
 export function stamp(value: number | null | undefined): string {
   return value
-    ? new Date(value * 1000).toLocaleString(undefined, {
+    ? new Date(value * 1000).toLocaleString("en-US", {
+        timeZone: "UTC",
+        timeZoneName: "short",
         month: "short",
         day: "numeric",
         hour: "2-digit",

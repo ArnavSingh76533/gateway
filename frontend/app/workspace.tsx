@@ -5,34 +5,27 @@ import {
   ArrowDownToLine,
   ArrowRight,
   BookOpen,
-  Box,
   ChartNoAxesCombined,
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronsUpDown,
   Clock,
   Code2,
-  Copy,
-  ExternalLink,
+  LockKeyhole,
+  CircleHelp,
   KeyRound,
   Layers3,
   LayoutDashboard,
   LoaderCircle,
   LogOut,
   Menu,
-  MoreHorizontal,
   Network,
   Pin,
-  Play,
   Plus,
   RefreshCw,
   Search,
   Settings2,
   ShieldCheck,
-  Sparkles,
-  Square,
   Star,
   Terminal,
   Trash2,
@@ -44,7 +37,6 @@ import {
 import {
   api,
   ApiError,
-  csrf,
   GatewayKey,
   Log,
   Model,
@@ -65,7 +57,11 @@ import {
   demoKeys,
 } from "@/lib/demo";
 import { AuthForm, ProviderForm, ModelForm } from "./forms";
+import Playground from "./playground";
+import Documentation from "./documentation";
+import RequestTable from "./request-table";
 import {
+  PageHeading,
   Badge,
   Banner,
   CopyButton,
@@ -76,6 +72,9 @@ import {
   ProviderIcon,
   Topology,
   TrafficChart,
+  Capabilities,
+  ProviderStatus,
+  Skeleton,
 } from "./ui";
 
 type View =
@@ -111,17 +110,6 @@ const blankUsage: Usage = {
   series: [],
   providers: [],
 };
-const modes = [
-  "auto",
-  "fastest",
-  "cheapest",
-  "reasoning",
-  "coding",
-  "vision",
-  "image",
-  "embedding",
-  "manual",
-];
 
 export default function Dashboard() {
   const [view, setView] = useState<View>("overview"),
@@ -144,6 +132,7 @@ export default function Dashboard() {
     [providerModal, setProviderModal] = useState<Provider | "new" | null>(null),
     [modelModal, setModelModal] = useState<Model | "new" | null>(null),
     [keyModal, setKeyModal] = useState(false),
+    [keyError, setKeyError] = useState(""),
     [secret, setSecret] = useState(""),
     [selectedLog, setSelectedLog] = useState<Log | null>(null),
     [confirm, setConfirm] = useState<{
@@ -157,8 +146,20 @@ export default function Dashboard() {
     [modelPage, setModelPage] = useState(0),
     [logPage, setLogPage] = useState(0),
     [errorsOnly, setErrorsOnly] = useState(false);
-  const [endpoint, setEndpoint] = useState("https://your-gateway.example/v1");
-  const notify = useCallback((s: string) => setToast(s), []);
+  const [endpoint, setEndpoint] = useState("");
+  const [toastTone, setToastTone] = useState<"success" | "error" | "info">(
+    "success",
+  );
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const notify = useCallback(
+    (s: string, tone: "success" | "error" | "info" = "success") => {
+      setToastTone(tone);
+      setToast(s);
+    },
+    [],
+  );
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 5000);
@@ -166,8 +167,15 @@ export default function Dashboard() {
   }, [toast]);
   useEffect(() => {
     setEndpoint(window.location.origin + "/v1");
-    const hash = window.location.hash.slice(1) as View;
-    if (nav.some((n) => n.id === hash)) setView(hash);
+    const syncHash = () => {
+      const hash = window.location.hash.slice(1) as View;
+      if (nav.some((n) => n.id === hash)) {
+        setView(hash);
+        setMobile(false);
+      }
+    };
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
     api<User>("/auth/me")
       .then((u) => {
         setUser(u);
@@ -177,7 +185,54 @@ export default function Dashboard() {
         setDemo(true);
       })
       .finally(() => setReady(true));
+    return () => window.removeEventListener("hashchange", syncHash);
   }, []);
+  useEffect(() => {
+    document.title = `${nav.find((n) => n.id === view)?.name || "Overview"} · Nexus AI Gateway`;
+  }, [view]);
+  useEffect(() => {
+    if (!mobile) return;
+    const drawer = sidebarRef.current;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const getFocusable = () =>
+      Array.from(
+        drawer?.querySelectorAll<HTMLElement>(
+          "a[href], button:not([disabled])",
+        ) || [],
+      );
+    getFocusable()[0]?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMobile(false);
+      }
+      if (e.key !== "Tab") return;
+      const elements = getFocusable();
+      const first = elements[0],
+        last = elements[elements.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+    const media = window.matchMedia("(min-width: 1024px)");
+    const onWide = () => {
+      if (media.matches) setMobile(false);
+    };
+    document.addEventListener("keydown", onKey);
+    media.addEventListener("change", onWide);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      media.removeEventListener("change", onWide);
+      document.body.style.overflow = overflow;
+      previous?.focus();
+    };
+  }, [mobile]);
   function navigate(next: View) {
     setView(next);
     setMobile(false);
@@ -229,7 +284,7 @@ export default function Dashboard() {
             setTotalModels(r.total);
           }
         })
-        .catch((e) => notify(e.message));
+        .catch((e) => notify(e.message, "error"));
     }, 250);
     return () => {
       active = false;
@@ -246,7 +301,7 @@ export default function Dashboard() {
           setTotalLogs(r.total);
         }
       })
-      .catch((e) => notify(e.message));
+      .catch((e) => notify(e.message, "error"));
     return () => {
       active = false;
     };
@@ -271,6 +326,10 @@ export default function Dashboard() {
     successRate = s.requests
       ? (((s.successes || 0) / s.requests) * 100).toFixed(1)
       : "—";
+  function openKeyModal() {
+    setKeyError("");
+    setKeyModal(true);
+  }
   function requireAccount(fn: () => void) {
     if (demo) setAuthOpen(true);
     else fn();
@@ -284,7 +343,7 @@ export default function Dashboard() {
       notify("Changes saved");
       await load();
     } catch (err) {
-      notify((err as Error).message);
+      notify((err as Error).message, "error");
     }
   }
   function connected() {
@@ -318,7 +377,7 @@ export default function Dashboard() {
         value={num(s.requests)}
         icon={Activity}
         detail={`${num(s.successes || 0)} successful requests`}
-        spark={u.series.map((d) => d.requests)}
+        loading={!ready || busy}
       />
       <Metric
         label="Average latency"
@@ -326,7 +385,7 @@ export default function Dashboard() {
         suffix="ms"
         icon={Zap}
         detail="End-to-end request duration"
-        spark={u.series.map((d) => d.avg_latency_ms || 0)}
+        loading={!ready || busy}
       />
       <Metric
         label="Success rate"
@@ -334,16 +393,14 @@ export default function Dashboard() {
         suffix={s.requests ? "%" : ""}
         icon={ShieldCheck}
         detail={`${num(s.requests - (s.successes || 0))} failed requests`}
-        spark={u.series.map((d) =>
-          d.requests ? (d.successes || 0) / d.requests : 0,
-        )}
+        loading={!ready || busy}
       />
       <Metric
         label="Estimated cost"
         value={s.estimated_cost == null ? "—" : money(s.estimated_cost)}
         icon={ChartNoAxesCombined}
         detail={`${num(s.priced_requests)} requests with known pricing`}
-        spark={u.series.map((d) => d.estimated_cost || 0)}
+        loading={!ready || busy}
       />
     </div>
   );
@@ -359,7 +416,21 @@ export default function Dashboard() {
           onClick={() => setMobile(false)}
         />
       )}
-      <aside className={`sidebar ${mobile ? "open" : ""}`}>
+      <aside
+        ref={sidebarRef}
+        id="workspace-navigation"
+        className={`sidebar ${mobile ? "open" : ""}`}
+        role={mobile ? "dialog" : undefined}
+        aria-modal={mobile || undefined}
+        aria-label="Workspace navigation"
+      >
+        <button
+          className="icon-button drawer-close"
+          onClick={() => setMobile(false)}
+          aria-label="Close navigation"
+        >
+          <X size={20} />
+        </button>
         <a
           href="#overview"
           className="brand"
@@ -381,14 +452,15 @@ export default function Dashboard() {
             </strong>
             <small>{demo ? "Sample data" : "Personal gateway"}</small>
           </span>
-          <ChevronsUpDown size={15} />
+          <ShieldCheck size={16} className="muted" aria-hidden="true" />
         </div>
         <span className="nav-caption">WORKSPACE</span>
         <nav aria-label="Main navigation">
           {nav.slice(0, 7).map((n) => (
-            <button
+            <a
               key={n.id}
-              onClick={() => navigate(n.id)}
+              href={`#${n.id}`}
+              onClick={() => setMobile(false)}
               className={`nav-link ${view === n.id ? "selected" : ""}`}
               aria-current={view === n.id ? "page" : undefined}
             >
@@ -397,82 +469,86 @@ export default function Dashboard() {
               {n.id === "providers" && (
                 <span className="nav-count">{p.length}</span>
               )}
-              {n.id === "playground" && <Badge tone="purple">TRY</Badge>}
-            </button>
+            </a>
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="connection-note">
-            <span className="note-icon">
-              <Network size={19} />
-            </span>
-            <strong>One endpoint. All your AI.</strong>
-            <p>
-              Your credentials stay yours.
-              <br />
-              Nexus connects the rest.
-            </p>
-            <button className="text-button" onClick={() => navigate("docs")}>
-              View quickstart <ArrowRight size={14} />
-            </button>
-          </div>
-          <button
+          <a
             className={`nav-link ${view === "docs" ? "selected" : ""}`}
-            onClick={() => navigate("docs")}
+            href="#docs"
+            onClick={() => setMobile(false)}
+            aria-current={view === "docs" ? "page" : undefined}
           >
             <BookOpen size={18} />
             Documentation
-            <ExternalLink size={14} />
-          </button>
+            <ChevronRight size={14} />
+          </a>
           <div className="user-bar">
             <span className="user-avatar">
               {demo ? "D" : user?.name.slice(0, 1).toUpperCase()}
             </span>
             <span>
-              <strong>{demo ? "Explore the demo" : user?.name}</strong>
-              <small>{demo ? "Connect when you’re ready" : user?.email}</small>
+              <strong>{demo ? "Demo workspace" : user?.name}</strong>
+              <small>{demo ? "Sample data · read only" : user?.email}</small>
             </span>
-            <button
-              className="icon-button"
-              aria-label={demo ? "Sign in" : "Sign out"}
-              onClick={() => {
-                if (demo) setAuthOpen(true);
-                else
-                  void api("/auth/logout", { method: "POST" })
-                    .then(() => {
-                      setUser(null);
-                      setDemo(true);
-                      setSecret("");
-                      notify("Signed out");
-                    })
-                    .catch((e) => notify(e.message));
-              }}
-            >
-              {demo ? <ArrowRight size={18} /> : <LogOut size={18} />}
-            </button>
+            {!demo && (
+              <button
+                className="icon-button"
+                aria-label="Sign out"
+                onClick={() => {
+                  if (demo) setAuthOpen(true);
+                  else
+                    void api("/auth/logout", { method: "POST" })
+                      .then(() => {
+                        setUser(null);
+                        setDemo(true);
+                        setSecret("");
+                        notify("Signed out");
+                      })
+                      .catch((e) => notify(e.message, "error"));
+                }}
+              >
+                <LogOut size={18} />
+              </button>
+            )}
           </div>
         </div>
       </aside>
-      <div className="workspace-main">
+      <div className="workspace-main" inert={mobile || undefined}>
         <header className="topbar">
           <div className="breadcrumbs">
             <button
+              ref={menuRef}
               className="icon-button menu-toggle"
+              aria-controls="workspace-navigation"
+              aria-expanded={mobile}
               onClick={() => setMobile(true)}
               aria-label="Open navigation"
             >
               <Menu size={22} />
             </button>
-            <span className="muted">Workspace</span>
-            <span className="breadcrumb-separator">/</span>
-            <span>{nav.find((n) => n.id === view)?.name}</span>
+            <span className="topbar-label">
+              {nav.find((n) => n.id === view)?.name}
+            </span>
+            {demo && (
+              <span
+                className="demo-pill"
+                title="Illustrative sample data. Sign in for your own workspace."
+              >
+                <span className="demo-dot" />
+                Demo<span className="demo-pill-detail"> workspace</span>
+              </span>
+            )}
           </div>
           <div className="topbar-actions">
-            <span className="self-hosted">
-              <ShieldCheck size={14} />
-              Self-hosted
-            </span>
-            <span className="top-divider" />
+            <a
+              className="icon-button self-hosted"
+              href="#docs"
+              title="Self-hosted gateway · integration guide"
+              aria-label="Integration guide"
+            >
+              <BookOpen size={17} />
+            </a>
             {demo ? (
               <button
                 className="button compact primary"
@@ -485,6 +561,7 @@ export default function Dashboard() {
                 className="button compact"
                 onClick={() => void load()}
                 disabled={busy}
+                aria-busy={busy}
               >
                 <RefreshCw size={14} className={busy ? "spin" : ""} />
                 Refresh
@@ -492,44 +569,32 @@ export default function Dashboard() {
             )}
           </div>
         </header>
-        {demo && (
-          <div className="demo-strip">
-            <span>
-              <span className="demo-dot" />
-              DEMO WORKSPACE{" "}
-              <span className="demo-description">
-                Explore the interface with sample data. No live requests or
-                charges.
-              </span>
-            </span>
-            <button onClick={() => setAuthOpen(true)}>
-              Connect your accounts <ArrowRight size={14} />
-            </button>
-          </div>
-        )}
-        <main id="main-content" className="content">
+        <main
+          id="main-content"
+          className={`content ${!ready || busy ? "is-loading" : ""}`}
+          tabIndex={-1}
+          aria-busy={!ready || busy}
+        >
           {connectionError && (
             <Banner tone="error">
-              {connectionError}{" "}
+              <strong>Workspace couldn’t refresh.</strong> {connectionError}{" "}
               <button className="text-button" onClick={() => void load()}>
                 Retry
               </button>
             </Banner>
           )}
-          {!ready && (
-            <div className="loading-note">
-              <LoaderCircle size={16} className="spin" />
-              Opening workspace…
-            </div>
+          {(!ready || busy) && (
+            <span className="sr-only" role="status">
+              Loading workspace data…
+            </span>
           )}
           {view === "overview" && (
             <>
               <div className="page-heading">
                 <div>
-                  <div className="eyebrow">YOUR AI, CONNECTED</div>
                   <h1>Gateway overview</h1>
                   <p className="page-subtitle">
-                    A clear view of every connection, request, and response.
+                    Monitor traffic, connections, and routing health.
                   </p>
                 </div>
                 <div className="heading-actions">
@@ -544,6 +609,24 @@ export default function Dashboard() {
                     Connect provider
                   </button>
                 </div>
+              </div>
+              <div className="operational-strip">
+                <span>
+                  <span className="dot" />
+                  {p.filter((x) => x.enabled).length} enabled connections
+                </span>
+                <span>
+                  <ShieldCheck size={14} />
+                  Your keys, encrypted
+                </span>
+                <span className="health-summary">
+                  <Clock size={14} />
+                  {
+                    p.filter((x) => x.enabled && x.health.status === "cooldown")
+                      .length
+                  }{" "}
+                  in cooldown
+                </span>
               </div>
               {stats}
               <div className="overview-grid">
@@ -620,6 +703,7 @@ export default function Dashboard() {
                         </span>
                       </div>
                       <ProviderStatus p={provider} />
+                      <ChevronRight size={14} className="provider-chevron" />
                     </button>
                   ))}
                   {!p.length && (
@@ -632,7 +716,7 @@ export default function Dashboard() {
                   )}
                 </div>
               </section>
-              <div className="bottom-grid">
+              <div className={`bottom-grid ${p.length ? "configured" : ""}`}>
                 <section className="panel">
                   <div className="panel-heading">
                     <h2>Recent requests</h2>
@@ -649,48 +733,51 @@ export default function Dashboard() {
                     compact
                   />
                 </section>
-                <section className="panel quickstart-panel">
-                  <div className="panel-heading">
-                    <div className="inline-heading">
-                      <Code2 size={18} className="accent" />
-                      <h2>Your universal endpoint</h2>
+                {!p.length && (
+                  <section className="panel quickstart-panel">
+                    <div className="panel-heading">
+                      <div className="inline-heading">
+                        <Code2 size={18} className="accent" />
+                        <h2>Your universal endpoint</h2>
+                      </div>
                     </div>
-                  </div>
-                  <p>
-                    Configure your client once. Choose the model on every
-                    request.
-                  </p>
-                  <div className="endpoint-line">
-                    <span>BASE URL</span>
-                    <code>{endpoint}</code>
-                    <CopyButton value={endpoint} onCopy={notify} label="" />
-                  </div>
-                  <pre className="code-snippet">
-                    import os{"\n"}
-                    <span className="code-purple">from</span> openai{" "}
-                    <span className="code-purple">import</span> OpenAI{"\n\n"}
-                    client = OpenAI({"\n"} base_url=
-                    <span className="code-green">"{endpoint}"</span>,{"\n"}{" "}
-                    api_key=
-                    <span className="code-green">
-                      os.environ["GATEWAY_API_KEY"]
-                    </span>
-                    {"\n"})
-                  </pre>
-                  <button
-                    className="text-button"
-                    onClick={() => navigate("docs")}
-                  >
-                    Read the integration guide <ArrowRight size={15} />
-                  </button>
-                </section>
+                    <p>
+                      Configure your client once. Choose the model on every
+                      request.
+                    </p>
+                    <div className="endpoint-line">
+                      <span>BASE URL</span>
+                      <code>
+                        {endpoint || <Skeleton className="endpoint-skeleton" />}
+                      </code>
+                      <CopyButton value={endpoint} onCopy={notify} label="" />
+                    </div>
+                    <pre className="code-snippet">
+                      import os{"\n"}
+                      <span className="code-purple">from</span> openai{" "}
+                      <span className="code-purple">import</span> OpenAI{"\n\n"}
+                      client = OpenAI({"\n"} base_url=
+                      <span className="code-green">"{endpoint}"</span>,{"\n"}{" "}
+                      api_key=
+                      <span className="code-green">
+                        os.environ["GATEWAY_API_KEY"]
+                      </span>
+                      {"\n"})
+                    </pre>
+                    <button
+                      className="text-button"
+                      onClick={() => navigate("docs")}
+                    >
+                      Read the integration guide <ArrowRight size={15} />
+                    </button>
+                  </section>
+                )}
               </div>
             </>
           )}
           {view === "providers" && (
             <>
               <PageHeading
-                eyebrow="CONNECTIONS"
                 title="Your providers"
                 subtitle="Connect once. Keep control of every credential and route."
                 action={
@@ -729,6 +816,7 @@ export default function Dashboard() {
                         title={
                           provider.pinned ? "Unpin provider" : "Pin provider"
                         }
+                        aria-pressed={provider.pinned}
                         onClick={() =>
                           requireAccount(
                             () =>
@@ -842,7 +930,7 @@ export default function Dashboard() {
                   <span className="add-circle">
                     <Plus size={25} />
                   </span>
-                  <h3>Connect another provider</h3>
+                  <h2>Connect another provider</h2>
                   <p>
                     Cloud models or your own endpoint.
                     <br />
@@ -876,7 +964,6 @@ export default function Dashboard() {
           {view === "models" && (
             <>
               <PageHeading
-                eyebrow="UNIVERSAL REGISTRY"
                 title="Model explorer"
                 subtitle="Find the right model across the providers you have connected."
                 action={
@@ -889,7 +976,9 @@ export default function Dashboard() {
                   </button>
                 }
               />
-              <div className="filter-bar">
+              <div
+                className={`filter-bar model-filters ${filtersOpen ? "expanded" : ""}`}
+              >
                 <label className="search-field">
                   <Search size={17} />
                   <input
@@ -902,46 +991,60 @@ export default function Dashboard() {
                     }}
                   />
                 </label>
-                <select
-                  aria-label="Filter capability"
-                  value={capability}
-                  onChange={(e) => {
-                    setCapability(e.target.value);
-                    setModelPage(0);
-                  }}
+                <button
+                  className="button filters-toggle"
+                  aria-expanded={filtersOpen}
+                  aria-controls="model-filter-controls"
+                  onClick={() => setFiltersOpen(!filtersOpen)}
                 >
-                  <option value="">All capabilities</option>
-                  {[
-                    "tools",
-                    "vision",
-                    "reasoning",
-                    "json_mode",
-                    "streaming",
-                    "embeddings",
-                    "images",
-                    "speech",
-                    "transcription",
-                  ].map((c) => (
-                    <option key={c} value={c}>
-                      {c.replaceAll("_", " ")}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Filter provider"
-                  value={filterProvider}
-                  onChange={(e) => {
-                    setFilterProvider(e.target.value);
-                    setModelPage(0);
-                  }}
-                >
-                  <option value="">All providers</option>
-                  {p.map((provider) => (
-                    <option key={provider.id} value={provider.id}>
-                      {provider.name}
-                    </option>
-                  ))}
-                </select>
+                  <Settings2 size={16} />
+                  Filters
+                  {(capability || filterProvider) && (
+                    <span className="dot violet" />
+                  )}
+                </button>
+                <div className="filter-controls" id="model-filter-controls">
+                  <select
+                    aria-label="Filter capability"
+                    value={capability}
+                    onChange={(e) => {
+                      setCapability(e.target.value);
+                      setModelPage(0);
+                    }}
+                  >
+                    <option value="">All capabilities</option>
+                    {[
+                      "tools",
+                      "vision",
+                      "reasoning",
+                      "json_mode",
+                      "streaming",
+                      "embeddings",
+                      "images",
+                      "speech",
+                      "transcription",
+                    ].map((c) => (
+                      <option key={c} value={c}>
+                        {c.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label="Filter provider"
+                    value={filterProvider}
+                    onChange={(e) => {
+                      setFilterProvider(e.target.value);
+                      setModelPage(0);
+                    }}
+                  >
+                    <option value="">All providers</option>
+                    {p.map((provider) => (
+                      <option key={provider.id} value={provider.id}>
+                        {provider.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="table-note">
                 <span>
@@ -953,7 +1056,7 @@ export default function Dashboard() {
               </div>
               <section className="panel table-panel">
                 <div className="table-scroll">
-                  <table>
+                  <table role="table" className="responsive-table model-table">
                     <thead>
                       <tr>
                         <th>Model</th>
@@ -968,8 +1071,8 @@ export default function Dashboard() {
                     </thead>
                     <tbody>
                       {displayedModels.map((model) => (
-                        <tr key={model.id}>
-                          <td>
+                        <tr key={model.id} role="row">
+                          <td className="model-identity" role="cell">
                             <div className="model-cell">
                               <ProviderIcon kind={model.provider} small />
                               <div>
@@ -981,46 +1084,18 @@ export default function Dashboard() {
                               </div>
                             </div>
                           </td>
-                          <td>
-                            <div className="capability-badges">
-                              {Object.entries(model.capabilities)
-                                .filter(
-                                  ([c, v]) =>
-                                    v &&
-                                    [
-                                      "tools",
-                                      "vision",
-                                      "reasoning",
-                                      "embeddings",
-                                      "images",
-                                      "speech",
-                                      "transcription",
-                                      "json_mode",
-                                    ].includes(c),
-                                )
-                                .slice(0, 4)
-                                .map(([c]) => (
-                                  <Badge
-                                    key={c}
-                                    tone={
-                                      c === "reasoning" ? "purple" : "neutral"
-                                    }
-                                  >
-                                    {c.replace("_", " ")}
-                                  </Badge>
-                                ))}
-                              {!Object.values(model.capabilities).some(
-                                Boolean,
-                              ) && <span className="muted">Unconfirmed</span>}
-                            </div>
+                          <td data-label="Capabilities" role="cell">
+                            <Capabilities values={model.capabilities} />
                           </td>
-                          <td className="mono">{num(model.context_window)}</td>
-                          <td>
+                          <td className="mono" data-label="Context" role="cell">
+                            {num(model.context_window)}
+                          </td>
+                          <td data-label="Input / Output · $ / 1M" role="cell">
                             <Price value={model.input_price} />
                             <span className="muted"> / </span>
                             <Price value={model.output_price} />
                           </td>
-                          <td>
+                          <td data-label="Availability" role="cell">
                             <Badge
                               tone={
                                 !model.enabled || !model.available
@@ -1039,11 +1114,16 @@ export default function Dashboard() {
                                     : "Listed"}
                             </Badge>
                           </td>
-                          <td>
+                          <td
+                            className="model-actions"
+                            data-label="Model actions"
+                            role="cell"
+                          >
                             <div className="row-actions">
                               <button
                                 className={`icon-button ${model.favorite ? "accent" : ""}`}
                                 aria-label={`Favorite ${model.name}`}
+                                aria-pressed={model.favorite}
                                 onClick={() =>
                                   requireAccount(
                                     () =>
@@ -1063,7 +1143,7 @@ export default function Dashboard() {
                               </button>
                               <button
                                 className="icon-button"
-                                title="Configure model"
+                                aria-label={`Configure ${model.name}`}
                                 onClick={() =>
                                   requireAccount(() => setModelModal(model))
                                 }
@@ -1085,6 +1165,7 @@ export default function Dashboard() {
                 {!displayedModels.length && (
                   <Empty
                     title="No matching models"
+                    headingLevel={2}
                     text={
                       p.length
                         ? "Try a different search, refresh a provider, or register a model manually."
@@ -1120,38 +1201,28 @@ export default function Dashboard() {
           {view === "keys" && (
             <>
               <PageHeading
-                eyebrow="ACCESS CONTROL"
                 title="Gateway API keys"
                 subtitle="One key connects your agents to every provider in this workspace."
                 action={
                   <button
                     className="button primary"
-                    onClick={() => requireAccount(() => setKeyModal(true))}
+                    onClick={() => requireAccount(() => openKeyModal())}
                   >
                     <Plus size={17} />
                     Create API key
                   </button>
                 }
               />
-              <div className="key-hero panel">
-                <div className="key-hero-icon">
-                  <KeyRound size={28} />
-                </div>
-                <div>
-                  <h2>A single key. Your entire model stack.</h2>
-                  <p>
-                    Gateway keys authenticate your applications. Provider
-                    credentials stay securely behind the gateway.
-                  </p>
-                </div>
-                <Badge tone="green">
-                  <ShieldCheck size={13} />
-                  Encrypted credentials
-                </Badge>
+              <div className="info-row">
+                <LockKeyhole size={16} />
+                <span>
+                  Keys are shown only once. Save each new key before closing.
+                </span>
+                <Badge>{k.filter((key) => !key.revoked).length} keys</Badge>
               </div>
               <section className="panel table-panel">
                 <div className="table-scroll">
-                  <table>
+                  <table role="table" className="responsive-table keys-table">
                     <thead>
                       <tr>
                         <th>Name</th>
@@ -1160,22 +1231,30 @@ export default function Dashboard() {
                         <th>Last used</th>
                         <th>Expires</th>
                         <th>Status</th>
-                        <th />
+                        <th>
+                          <span className="sr-only">Actions</span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {k.map((key) => (
-                        <tr key={key.id}>
-                          <td>
+                        <tr key={key.id} role="row">
+                          <td data-label="Name">
                             <strong>{key.name}</strong>
                           </td>
-                          <td>
+                          <td data-label="Key prefix">
                             <code>{key.prefix}••••••</code>
                           </td>
-                          <td>{stamp(key.created_at)}</td>
-                          <td>{stamp(key.last_used_at)}</td>
-                          <td>{stamp(key.expires_at)}</td>
-                          <td>
+                          <td data-label="Created">{stamp(key.created_at)}</td>
+                          <td data-label="Last used">
+                            {stamp(key.last_used_at)}
+                          </td>
+                          <td data-label="Expires">
+                            {key.expires_at
+                              ? stamp(key.expires_at)
+                              : "No expiration"}
+                          </td>
+                          <td data-label="Status">
                             <Badge
                               tone={
                                 key.revoked
@@ -1194,7 +1273,7 @@ export default function Dashboard() {
                                   : "Active"}
                             </Badge>
                           </td>
-                          <td>
+                          <td className="key-actions" data-label="Access">
                             {!key.revoked && (
                               <button
                                 className="text-button danger"
@@ -1221,48 +1300,41 @@ export default function Dashboard() {
                 {!k.length && (
                   <Empty
                     title="Create your first key"
+                    headingLevel={2}
                     text="Give each agent or environment a separate key so you can revoke access independently."
                     action="Create API key"
-                    onAction={() => setKeyModal(true)}
+                    onAction={() => openKeyModal()}
                   />
                 )}
               </section>
-              <div className="note-panel">
-                <ShieldCheck size={20} />
-                <div>
-                  <h3>Keys are shown only once</h3>
-                  <p>
-                    Store a new key when it appears. Lost keys cannot be
-                    recovered; create a replacement and revoke the old one.
-                  </p>
-                </div>
-              </div>
             </>
           )}
           {view === "requests" && (
             <>
               <PageHeading
-                eyebrow="OBSERVABILITY"
                 title="Request history"
                 subtitle="Inspect routing decisions, timing, token usage, and fallback attempts."
                 action={
-                  <button
+                  <a
                     className="button"
-                    onClick={() =>
-                      requireAccount(() =>
-                        window.location.assign("/api/usage/export"),
-                      )
-                    }
+                    href="/api/usage/export"
+                    onClick={(event) => {
+                      if (demo) {
+                        event.preventDefault();
+                        setAuthOpen(true);
+                      }
+                    }}
                   >
                     <ArrowDownToLine size={16} />
                     Export CSV
-                  </button>
+                  </a>
                 }
               />
               <div className="filter-bar">
                 <div className="segmented">
                   <button
                     className={!errorsOnly ? "active" : ""}
+                    aria-pressed={!errorsOnly}
                     onClick={() => {
                       setErrorsOnly(false);
                       setLogPage(0);
@@ -1272,6 +1344,7 @@ export default function Dashboard() {
                   </button>
                   <button
                     className={errorsOnly ? "active" : ""}
+                    aria-pressed={errorsOnly}
                     onClick={() => {
                       setErrorsOnly(true);
                       setLogPage(0);
@@ -1306,7 +1379,6 @@ export default function Dashboard() {
           {view === "usage" && (
             <>
               <PageHeading
-                eyebrow="ANALYTICS"
                 title="Usage & performance"
                 subtitle="Understand your request volume, provider performance, and estimated spend."
                 action={selectDays}
@@ -1370,19 +1442,19 @@ export default function Dashboard() {
                     token counts or prices remain unknown. Provider invoices may
                     include other charges and failed attempts.
                   </p>
-                  <button
+                  <a
                     className="text-button"
-                    onClick={() =>
-                      requireAccount(() =>
-                        window.location.assign(
-                          `/api/usage/export?days=${days}`,
-                        ),
-                      )
-                    }
+                    href={`/api/usage/export?days=${days}`}
+                    onClick={(event) => {
+                      if (demo) {
+                        event.preventDefault();
+                        setAuthOpen(true);
+                      }
+                    }}
                   >
                     <ArrowDownToLine size={15} />
                     Export usage
-                  </button>
+                  </a>
                 </section>
               </div>
             </>
@@ -1404,8 +1476,17 @@ export default function Dashboard() {
         </main>
       </div>
       {toast && (
-        <div className="toast" role="status">
-          <Check size={17} />
+        <div
+          className={`toast ${toastTone}`}
+          role={toastTone === "error" ? "alert" : "status"}
+        >
+          {toastTone === "error" ? (
+            <TriangleAlert size={18} />
+          ) : toastTone === "info" ? (
+            <CircleHelp size={18} />
+          ) : (
+            <Check size={18} />
+          )}
           {toast}
           <button
             className="icon-button"
@@ -1454,6 +1535,7 @@ export default function Dashboard() {
               e.preventDefault();
               const f = new FormData(e.currentTarget);
               setBusy(true);
+              setKeyError("");
               try {
                 const res = await api<{ key: string }>("/keys", {
                   method: "POST",
@@ -1468,7 +1550,7 @@ export default function Dashboard() {
                 setKeyModal(false);
                 void load();
               } catch (err) {
-                notify((err as Error).message);
+                setKeyError((err as Error).message);
               } finally {
                 setBusy(false);
               }
@@ -1492,12 +1574,13 @@ export default function Dashboard() {
                 <option value="365">1 year</option>
               </select>
             </label>
+            {keyError && <Banner tone="error">{keyError}</Banner>}
             <Banner>
               The full key is only shown after creation. Store it securely
               before closing.
             </Banner>
-            <button className="button primary" disabled={busy}>
-              Create key
+            <button className="button primary" disabled={busy} aria-busy={busy}>
+              {busy && <LoaderCircle className="spin" size={16} />} Create key
             </button>
           </form>
         </Modal>
@@ -1618,42 +1701,20 @@ export default function Dashboard() {
   );
 }
 
-function PageHeading({
-  eyebrow,
-  title,
-  subtitle,
-  action,
-}: {
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="page-heading">
-      <div>
-        <div className="eyebrow">{eyebrow}</div>
-        <h1>{title}</h1>
-        <p className="page-subtitle">{subtitle}</p>
-      </div>
-      <div className="heading-actions">{action}</div>
-    </div>
-  );
-}
 function Metric({
   label,
   value,
   suffix,
   detail,
   icon: Icon,
-  spark,
+  loading = false,
 }: {
   label: string;
   value: string;
   suffix?: string;
   detail: string;
   icon: typeof Activity;
-  spark: number[];
+  loading?: boolean;
 }) {
   return (
     <section className="stat-card">
@@ -1663,50 +1724,18 @@ function Metric({
       </div>
       <div className="stat-main">
         <strong>
-          {value}
-          <span>{suffix}</span>
+          {loading ? (
+            <Skeleton className="stat-skeleton" />
+          ) : (
+            <>
+              {value}
+              <span>{suffix}</span>
+            </>
+          )}
         </strong>
-        <svg className="sparkline" viewBox="0 0 82 28" aria-hidden="true">
-          <polyline
-            points={spark
-              .map(
-                (v, i) =>
-                  `${(i * 78) / Math.max(spark.length - 1, 1)},${25 - (v / Math.max(...spark, 1)) * 20}`,
-              )
-              .join(" ")}
-          />
-        </svg>
       </div>
       <p>{detail}</p>
     </section>
-  );
-}
-function ProviderStatus({ p }: { p: Provider }) {
-  const state = !p.enabled
-    ? "Disabled"
-    : p.health.status === "cooldown"
-      ? "Cooldown"
-      : p.discovery_error
-        ? "Check key"
-        : p.health.status === "degraded"
-          ? "High latency"
-          : p.health.status === "healthy"
-            ? "Healthy"
-            : p.discovered_at
-              ? "Connected"
-              : "Not checked";
-  return (
-    <Badge
-      tone={
-        ["Healthy", "Connected"].includes(state)
-          ? "green"
-          : ["Cooldown", "Check key", "High latency"].includes(state)
-            ? "amber"
-            : "neutral"
-      }
-    >
-      {state}
-    </Badge>
   );
 }
 function Pagination({
@@ -1742,551 +1771,5 @@ function Pagination({
         <ChevronRight size={17} />
       </button>
     </div>
-  );
-}
-function RequestTable({
-  logs,
-  onSelect,
-  compact = false,
-}: {
-  logs: Log[];
-  onSelect: (l: Log) => void;
-  compact?: boolean;
-}) {
-  return logs.length ? (
-    <div className="table-scroll">
-      <table className="requests-table">
-        <thead>
-          <tr>
-            <th>Model / request</th>
-            <th>Status</th>
-            <th>Latency</th>
-            {!compact && (
-              <>
-                <th>Tokens in / out</th>
-                <th>Cost</th>
-                <th>Attempts</th>
-              </>
-            )}
-            <th>Time</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map((log) => (
-            <tr key={log.id} onClick={() => onSelect(log)}>
-              <td>
-                <button
-                  className="table-cell-button"
-                  onClick={() => onSelect(log)}
-                >
-                  <strong>{log.resolved_model || log.requested_model}</strong>
-                  <small>
-                    {log.provider_name || "No provider"}
-                    {log.attempts.length > 1 && (
-                      <span className="fallback-label"> ↪ Fallback</span>
-                    )}
-                  </small>
-                </button>
-              </td>
-              <td>
-                <Badge tone={log.status < 400 ? "green" : "amber"}>
-                  {log.status < 400 ? (
-                    <Check size={12} />
-                  ) : (
-                    <TriangleAlert size={12} />
-                  )}{" "}
-                  {log.status}
-                </Badge>
-              </td>
-              <td className="mono">
-                {Math.round(log.latency_ms)} <span className="muted">ms</span>
-              </td>
-              {!compact && (
-                <>
-                  <td className="mono">
-                    {num(log.input_tokens)} / {num(log.output_tokens)}
-                  </td>
-                  <td>
-                    <Price value={log.estimated_cost} />
-                  </td>
-                  <td>{log.attempts.length}</td>
-                </>
-              )}
-              <td className="muted nowrap">{stamp(log.created_at)}</td>
-              <td>
-                <ChevronRight size={15} className="muted" />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  ) : (
-    <Empty
-      title="No requests yet"
-      text="Your gateway requests and routing history will appear here."
-    />
-  );
-}
-
-function Playground({
-  demo,
-  providers,
-  models,
-  requireAccount,
-  notify,
-  onFinish,
-}: {
-  demo: boolean;
-  providers: Provider[];
-  models: Model[];
-  requireAccount: (fn: () => void) => void;
-  notify: (s: string) => void;
-  onFinish: () => Promise<void>;
-}) {
-  const [prompt, setPrompt] = useState(
-      "Explain how an AI gateway routes a request in three clear steps.",
-    ),
-    [system, setSystem] = useState(
-      "You are a helpful assistant. Be concise and accurate.",
-    ),
-    [mode, setMode] = useState("auto"),
-    [provider, setProvider] = useState(""),
-    [model, setModel] = useState("auto"),
-    [stream, setStream] = useState(true),
-    [output, setOutput] = useState(""),
-    [running, setRunning] = useState(false),
-    [info, setInfo] = useState(""),
-    [alternatives, setAlternatives] = useState(false),
-    [retries, setRetries] = useState(2);
-  const controller = useRef<AbortController | null>(null);
-  useEffect(() => () => controller.current?.abort(), []);
-  async function run() {
-    setRunning(true);
-    setOutput("");
-    setInfo("Connecting…");
-    controller.current = new AbortController();
-    const started = performance.now();
-    try {
-      const body = {
-        model:
-          model === "auto"
-            ? mode === "auto"
-              ? "auto"
-              : `auto/${mode}`
-            : model,
-        routing: mode,
-        provider: provider || undefined,
-        stream,
-        max_retries: retries,
-        allow_alternatives: alternatives,
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: prompt },
-        ],
-        ...(stream ? { stream_options: { include_usage: true } } : {}),
-      };
-      const response = await fetch("/api/playground", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() },
-        body: JSON.stringify(body),
-        signal: controller.current.signal,
-      });
-      if (!response.ok) {
-        const e = await response.json();
-        throw new Error(
-          e.error?.message || `Request failed (${response.status})`,
-        );
-      }
-      setInfo(
-        `${response.headers.get("X-Gateway-Provider")} · ${response.headers.get("X-Gateway-Model")} · ${response.headers.get("X-Gateway-Attempts")} attempt(s)`,
-      );
-      if (stream && response.body) {
-        const reader = response.body.getReader(),
-          decoder = new TextDecoder();
-        let buffer = "";
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-          for (const line of lines) {
-            if (!line.startsWith("data:")) continue;
-            const raw = line.slice(5).trim();
-            if (!raw || raw === "[DONE]") continue;
-            const data = JSON.parse(raw);
-            if (data.error) throw new Error(data.error.message);
-            const delta = data.choices?.[0]?.delta;
-            if (delta?.content) setOutput((prev) => prev + delta.content);
-            if (delta?.tool_calls)
-              setOutput(
-                (prev) =>
-                  prev + "\n" + JSON.stringify(delta.tool_calls, null, 2),
-              );
-          }
-        }
-      } else {
-        const data = await response.json();
-        setOutput(
-          data.choices?.[0]?.message?.content || JSON.stringify(data, null, 2),
-        );
-      }
-      setInfo(
-        (prev) =>
-          prev + ` · ${((performance.now() - started) / 1000).toFixed(1)}s`,
-      );
-    } catch (err) {
-      if ((err as Error).name === "AbortError") {
-        setInfo("Request stopped");
-      } else {
-        setInfo("Request failed");
-        setOutput((prev) => prev + "\n" + (err as Error).message);
-      }
-    } finally {
-      setRunning(false);
-      void onFinish();
-    }
-  }
-  return (
-    <>
-      <PageHeading
-        eyebrow="DEVELOPER TOOLS"
-        title="Playground"
-        subtitle="Test your gateway with a real request and inspect the selected route."
-        action={
-          <Badge tone="purple">
-            <Terminal size={14} />
-            Chat completions
-          </Badge>
-        }
-      />
-      {demo && (
-        <Banner>
-          Sign in and connect a provider to send real requests. The playground
-          uses your provider account and may incur charges.
-        </Banner>
-      )}
-      <div className="playground-grid">
-        <section className="panel playground-settings">
-          <h2>Request configuration</h2>
-          <div className="form">
-            <label>
-              Routing strategy
-              <select value={mode} onChange={(e) => setMode(e.target.value)}>
-                {modes
-                  .filter((x) => !["image", "embedding"].includes(x))
-                  .map((x) => (
-                    <option key={x} value={x}>
-                      {x[0].toUpperCase() + x.slice(1)}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              Provider
-              <select
-                value={provider}
-                onChange={(e) => {
-                  setProvider(e.target.value);
-                  setModel("auto");
-                }}
-              >
-                <option value="">All enabled providers</option>
-                {providers
-                  .filter((x) => x.enabled)
-                  .map((p) => (
-                    <option value={p.id} key={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              Model
-              <select value={model} onChange={(e) => setModel(e.target.value)}>
-                <option value="auto">Auto-select a model</option>
-                {models
-                  .filter(
-                    (m) =>
-                      (!provider || m.provider_id === provider) &&
-                      m.capabilities.chat !== false,
-                  )
-                  .map((m) => (
-                    <option
-                      key={m.id}
-                      value={provider ? m.model_id : m.route_id}
-                    >
-                      {m.name} · {m.provider_name}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              Retry budget
-              <select
-                value={retries}
-                onChange={(e) => setRetries(Number(e.target.value))}
-              >
-                {[0, 1, 2, 3, 4, 5].map((n) => (
-                  <option value={n} key={n}>
-                    {n} {n === 1 ? "retry" : "retries"}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={stream}
-                onChange={(e) => setStream(e.target.checked)}
-              />
-              Stream response
-            </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={alternatives}
-                onChange={(e) => setAlternatives(e.target.checked)}
-              />
-              Allow alternative models
-            </label>
-            <p className="form-note">
-              Your server’s retry limit is the upper bound. Provider selection
-              stays pinned. Alternatives require confirmed capabilities.
-            </p>
-          </div>
-        </section>
-        <section className="panel playground-chat">
-          <div className="panel-heading">
-            <h2>Compose a request</h2>
-            <Badge>/v1/chat/completions</Badge>
-          </div>
-          <div className="form playground-compose">
-            <label>
-              System instruction
-              <textarea
-                rows={2}
-                value={system}
-                onChange={(e) => setSystem(e.target.value)}
-              />
-            </label>
-            <label>
-              Your message
-              <textarea
-                rows={4}
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Ask something…"
-              />
-            </label>
-            <div className="compose-actions">
-              <span className="muted">
-                <ShieldCheck size={14} />
-                Prompt content is not logged
-              </span>
-              {running ? (
-                <button
-                  className="button"
-                  onClick={() => controller.current?.abort()}
-                >
-                  <Square size={15} />
-                  Stop
-                </button>
-              ) : (
-                <button
-                  className="button primary"
-                  disabled={!prompt.trim()}
-                  onClick={() => requireAccount(() => void run())}
-                >
-                  <Play size={15} />
-                  Send request
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="response-heading">
-            <div>
-              <Sparkles size={16} />
-              <h3>Response</h3>
-            </div>
-            {output && <CopyButton value={output} onCopy={notify} />}
-          </div>
-          <div
-            className={`response-output ${!output ? "no-output" : ""}`}
-            aria-live="polite"
-          >
-            {output ? (
-              <pre>{output}</pre>
-            ) : running ? (
-              <span>
-                <LoaderCircle size={18} className="spin" />
-                Waiting for the provider…
-              </span>
-            ) : (
-              <span>
-                <Terminal size={25} />
-                <strong>Your response will appear here</strong>
-                <small>Choose a route, write a message, and send.</small>
-              </span>
-            )}
-          </div>
-          {info && <div className="response-info mono">{info}</div>}
-        </section>
-      </div>
-    </>
-  );
-}
-
-function Documentation({
-  endpoint,
-  notify,
-}: {
-  endpoint: string;
-  notify: (s: string) => void;
-}) {
-  const [language, setLanguage] = useState("Python");
-  const snippets: Record<string, string> = {
-    Python: `import os\nfrom openai import OpenAI\n\nclient = OpenAI(\n    base_url="${endpoint}",\n    api_key=os.environ["GATEWAY_API_KEY"],\n    max_retries=0,  # Gateway owns the fallback budget\n)\n\nresponse = client.chat.completions.create(\n    model="auto/coding",\n    messages=[{"role": "user", "content": "Explain async Python"}],\n)\nprint(response.choices[0].message.content)`,
-    TypeScript: `import OpenAI from "openai";\n\nconst client = new OpenAI({\n  baseURL: "${endpoint}",\n  apiKey: process.env.GATEWAY_API_KEY,\n  maxRetries: 0,\n});\n\nconst response = await client.chat.completions.create({\n  model: "auto/coding",\n  messages: [{ role: "user", content: "Explain async Python" }],\n});\nconsole.log(response.choices[0].message.content);`,
-    cURL: `curl "${endpoint}/chat/completions" \\\n  -H "Authorization: Bearer $GATEWAY_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "model": "auto/coding",\n    "messages": [{"role":"user", "content":"Hello!"}]\n  }'`,
-  };
-  return (
-    <>
-      <PageHeading
-        eyebrow="INTEGRATION GUIDE"
-        title="One endpoint. Start building."
-        subtitle="Use the OpenAI SDK or any client that supports a custom OpenAI-compatible base URL."
-      />
-      <div className="docs-layout">
-        <section className="panel docs-code">
-          <div className="panel-heading">
-            <div className="segmented">
-              {Object.keys(snippets).map((x) => (
-                <button
-                  key={x}
-                  className={language === x ? "active" : ""}
-                  onClick={() => setLanguage(x)}
-                >
-                  {x}
-                </button>
-              ))}
-            </div>
-            <CopyButton value={snippets[language]} onCopy={notify} />
-          </div>
-          <pre>{snippets[language]}</pre>
-        </section>
-        <section className="panel docs-steps">
-          <h2>Connect in three steps</h2>
-          {[
-            [
-              "Add your providers",
-              "Save a key from OpenRouter, Groq, Google AI Studio, Hugging Face, Together, Fireworks, or a custom endpoint.",
-            ],
-            [
-              "Create a Gateway API key",
-              "Copy the key once and store it as an environment variable.",
-            ],
-            [
-              "Point your client to Nexus",
-              "Set the base URL and Gateway API key, then choose auto or a model from your registry.",
-            ],
-          ].map(([title, text], i) => (
-            <div className="doc-step" key={title}>
-              <span>{i + 1}</span>
-              <div>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </div>
-            </div>
-          ))}
-        </section>
-      </div>
-      <section className="panel">
-        <div className="panel-heading">
-          <h2>Routing reference</h2>
-        </div>
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Model / mode</th>
-                <th>Behavior</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                [
-                  "auto",
-                  "Selects a confirmed compatible model by provider priority and measured latency.",
-                ],
-                [
-                  "auto/fastest",
-                  "Prefers the lowest observed end-to-end latency. Unknown latency sorts last.",
-                ],
-                [
-                  "auto/cheapest",
-                  "Prefers the lowest known input + output token price. Unknown prices sort last.",
-                ],
-                [
-                  "auto/coding",
-                  "Prefers declared coding models or coding-family names, then normal priority.",
-                ],
-                [
-                  "auto/reasoning · auto/vision",
-                  "Requires confirmed reasoning or vision capability.",
-                ],
-                [
-                  "auto/image · auto/embedding",
-                  "Use on /images/generations or /embeddings respectively.",
-                ],
-                [
-                  "provider + native model",
-                  "Pins the provider and prefers the exact model ID.",
-                ],
-                [
-                  "connection-id::model-id",
-                  "Pins a specific provider connection. Copy this ID from Model explorer.",
-                ],
-              ].map(([a, b]) => (
-                <tr key={a}>
-                  <td className="mono">{a}</td>
-                  <td>{b}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-      <div className="two-columns docs-notes">
-        <div className="note-panel">
-          <h3>Streaming & fallback</h3>
-          <p>
-            The gateway retries eligible upstream errors before any response
-            data has been sent. After streaming starts, an interruption is
-            reported in-stream; it never silently combines output from two
-            providers.
-          </p>
-        </div>
-        <div className="note-panel">
-          <h3>Agent compatibility</h3>
-          <p>
-            Use OpenAI-compatible mode in OpenCode, Continue, Cline, Cursor, Roo
-            Code, or Aider. Some clients also require a model ID. Claude Code
-            uses the included Messages bridge. Client-specific features and
-            model capabilities still apply.
-          </p>
-          <a
-            className="text-button"
-            href="/api/docs"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open API reference <ExternalLink size={14} />
-          </a>
-        </div>
-      </div>
-    </>
   );
 }
