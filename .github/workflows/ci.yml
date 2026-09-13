@@ -13,6 +13,7 @@ jobs:
       - run: pip install --require-hashes -r backend/requirements.lock
       - run: pip install -e './backend[dev]' -e ./sdk/python
       - run: ruff check backend/app backend/tests
+      - run: ruff check --config backend/pyproject.toml deploy/start.py
       - run: mypy backend/app
       - run: pytest backend/tests -q
       - run: DATABASE_URL=sqlite+aiosqlite:///./migration-test.db python -m alembic -c backend/alembic.ini upgrade head
