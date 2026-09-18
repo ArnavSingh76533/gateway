@@ -15,12 +15,20 @@ logger = logging.getLogger("gateway.monitor")
 
 
 def adapter_for(state: Any, provider: Provider) -> OpenAIAdapter:
-    return ADAPTERS[provider.kind](
+    adapter = ADAPTERS[provider.kind](
         state.http,
         provider.base_url,
         state.vault.open(provider.encrypted_credentials),
         state.settings.max_response_bytes,
     )
+
+    async def report(headers: httpx.Headers) -> None:
+        from .quotas import capture
+
+        await capture(state, provider.id, adapter.quota_model, headers)
+
+    adapter.on_headers = report
+    return adapter
 
 
 async def refresh(state: Any, provider_id: str) -> dict[str, Any]:

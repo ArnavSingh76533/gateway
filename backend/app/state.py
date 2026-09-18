@@ -48,6 +48,15 @@ class SharedState:
         else:
             self.memory.pop(key, None)
 
+    async def consume(self, key: str) -> str | None:
+        """Atomically claim one-time OAuth state; a replay can never reuse it."""
+        if self.redis:
+            return await self.redis.getdel(key)  # type: ignore[no-any-return]
+        async with self.lock:
+            value = await self.get(key)
+            self.memory.pop(key, None)
+            return value
+
     async def rate_limit(self, key: str, limit: int, seconds: int = 60) -> None:
         key = "rate:" + key + ":" + str(int(time.time()) // seconds)
         if self.redis:

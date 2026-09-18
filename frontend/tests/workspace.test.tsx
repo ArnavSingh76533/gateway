@@ -81,6 +81,7 @@ function mockServer(authenticated = false, empty = false) {
   return fetcher;
 }
 async function mounted(authenticated = false, empty = false) {
+  window.location.hash = "overview";
   const fetcher = mockServer(authenticated, empty);
   const rendered = render(<Dashboard />);
   await waitFor(() =>

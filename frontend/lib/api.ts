@@ -1,3 +1,4 @@
+import catalog from "./provider-catalog.json";
 export type User = {
   id: string;
   name: string;
@@ -92,48 +93,27 @@ export type Usage = {
   days: number;
 };
 export type Page<T> = { data: T[]; total: number };
-export const providerInfo: Record<
-  string,
-  { name: string; symbol: string; color: string; url: string }
-> = {
-  openrouter: {
-    name: "OpenRouter",
-    symbol: "↗",
-    color: "#a58af5",
-    url: "https://openrouter.ai/api/v1",
-  },
-  groq: {
-    name: "Groq",
-    symbol: "g",
-    color: "#f59a76",
-    url: "https://api.groq.com/openai/v1",
-  },
-  google: {
-    name: "Google AI Studio",
-    symbol: "✦",
-    color: "#8baaff",
-    url: "https://generativelanguage.googleapis.com/v1beta/openai",
-  },
-  huggingface: {
-    name: "Hugging Face",
-    symbol: "H",
-    color: "#e3bd6a",
-    url: "https://router.huggingface.co/v1",
-  },
-  together: {
-    name: "Together AI",
-    symbol: "t",
-    color: "#9bcbe8",
-    url: "https://api.together.ai/v1",
-  },
-  fireworks: {
-    name: "Fireworks AI",
-    symbol: "✳",
-    color: "#e494d7",
-    url: "https://api.fireworks.ai/inference/v1",
-  },
-  custom: { name: "Custom endpoint", symbol: "⌘", color: "#a9b3ba", url: "" },
+export type ProviderDirectoryEntry = {
+  id: string;
+  name: string;
+  symbol: string;
+  color: string;
+  url: string;
+  website: string;
+  key_url?: string;
+  integration: string;
+  protocol: string;
+  auth: string[];
+  category: string;
+  note?: string;
 };
+export const providerDirectory: ProviderDirectoryEntry[] = catalog;
+export const providerInfo: Record<string, ProviderDirectoryEntry> =
+  Object.fromEntries(
+    providerDirectory
+      .filter((p) => p.integration === "direct")
+      .map((p) => [p.id, p]),
+  );
 export function csrf(): string {
   return typeof document === "undefined"
     ? ""

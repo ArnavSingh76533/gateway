@@ -163,9 +163,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
+                    "additionalProperties": true,
                     "type": "object"
                   },
                   "type": "array",
@@ -993,6 +991,217 @@
               "minimum": 1,
               "default": 30,
               "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
+    "/api/quotas": {
+      "get": {
+        "tags": [
+          "Provider quotas"
+        ],
+        "summary": "Quotas",
+        "operationId": "quotas_api_quotas_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Quotas Api Quotas Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
+    "/api/providers/{pid}/quota-refresh": {
+      "post": {
+        "tags": [
+          "Provider quotas"
+        ],
+        "summary": "Refresh Balance",
+        "operationId": "refresh_balance_api_providers__pid__quota_refresh_post",
+        "parameters": [
+          {
+            "name": "pid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pid"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value of the gw_csrf cookie. Same-origin dashboard mutations only."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Refresh Balance Api Providers  Pid  Quota Refresh Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
+    "/api/oauth/openrouter/start": {
+      "post": {
+        "tags": [
+          "Provider OAuth"
+        ],
+        "summary": "Start",
+        "operationId": "start_api_oauth_openrouter_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Api Oauth Openrouter Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value of the gw_csrf cookie. Same-origin dashboard mutations only."
+          }
+        ]
+      }
+    },
+    "/api/oauth/openrouter/callback": {
+      "get": {
+        "tags": [
+          "Provider OAuth"
+        ],
+        "summary": "Callback",
+        "operationId": "callback_api_oauth_openrouter_callback_get",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "State"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Error"
             }
           }
         ],
@@ -2603,18 +2812,81 @@
         ],
         "title": "NewGatewayKey"
       },
+      "OAuthStart": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name",
+            "default": "OpenRouter"
+          }
+        },
+        "type": "object",
+        "title": "OAuthStart"
+      },
       "ProviderInput": {
         "properties": {
           "kind": {
             "type": "string",
             "enum": [
-              "openrouter",
-              "groq",
-              "google",
-              "huggingface",
-              "together",
+              "9router",
+              "alicode",
+              "alicode-intl",
+              "alims-intl",
+              "alitp-intl",
+              "anthropic",
+              "api-airforce",
+              "azure",
+              "baidu",
+              "bazaarlink",
+              "blackbox",
+              "bluesminds",
+              "byteplus",
+              "cerebras",
+              "chutes",
+              "cloudflare-ai",
+              "cohere",
+              "custom",
+              "deepseek",
+              "featherless",
               "fireworks",
-              "custom"
+              "glm",
+              "glm-cn",
+              "google",
+              "groq",
+              "huggingface",
+              "hyperbolic",
+              "jina-ai",
+              "kilo-gateway",
+              "llm7",
+              "minimax",
+              "minimax-cn",
+              "mistral",
+              "morph",
+              "nebius",
+              "nvidia",
+              "ollama",
+              "ollama-local",
+              "openai",
+              "opencode",
+              "opencode-go",
+              "openrouter",
+              "perplexity",
+              "poolside",
+              "recraft",
+              "sambanova",
+              "siliconflow",
+              "tencent",
+              "together",
+              "tokenrouter",
+              "venice",
+              "vercel-ai-gateway",
+              "volcengine-ark",
+              "voyage-ai",
+              "xai",
+              "xiaomi-mimo",
+              "xiaomi-tokenplan"
             ],
             "title": "Kind"
           },

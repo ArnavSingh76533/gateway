@@ -13,6 +13,7 @@ from .discovery import refresh
 from .errors import fail
 from .models import AuditLog, GatewayKey, Provider, RegistryModel, RequestLog
 from .providers import ADAPTERS
+from .providers.catalog import CATALOG
 from .schemas import ModelInput, NewGatewayKey, ProviderInput, ProviderPatch
 from .security import validate_base_url, validate_headers
 from .site_config import published_ids, site_options
@@ -32,8 +33,8 @@ async def owned_provider(db: Any, user_id: str, pid: str) -> Provider:
 
 
 @router.get("/catalog")
-async def catalog(user: CurrentUser) -> list[dict[str, str]]:
-    return [{"kind": kind, "base_url": adapter.default_url} for kind, adapter in ADAPTERS.items()]
+async def catalog(user: CurrentUser) -> list[dict[str, Any]]:
+    return [{**entry, "kind": entry["id"], "base_url": entry["url"]} for entry in CATALOG]
 
 
 @router.get("/providers")
@@ -63,7 +64,7 @@ async def providers(request: Request, db: DB, user: CurrentUser) -> list[dict]:
 
 @router.post("/providers", status_code=201)
 async def create_provider(body: ProviderInput, request: Request, db: DB, user: CurrentUser) -> dict:
-    if body.kind != "custom" and not body.api_key:
+    if body.kind not in {"custom", "ollama-local"} and not body.api_key:
         raise fail(422, "An API key is required for this provider.")
     url = validate_base_url(
         body.base_url or ADAPTERS[body.kind].default_url,
@@ -72,8 +73,8 @@ async def create_provider(body: ProviderInput, request: Request, db: DB, user: C
     count = await db.scalar(
         select(func.count()).select_from(Provider).where(Provider.user_id == user.id)
     )
-    if count and count >= 50:
-        raise fail(409, "At most 50 provider connections are allowed.")
+    if count and count >= 150:
+        raise fail(409, "At most 150 provider connections are allowed.")
     p = Provider(
         user_id=user.id,
         kind=body.kind,
@@ -122,7 +123,7 @@ async def patch_provider(
     if "api_key" in data or "headers" in data:
         creds = request.app.state.vault.open(p.encrypted_credentials)
         if body.api_key is not None:
-            if not body.api_key and p.kind != "custom":
+            if not body.api_key and p.kind not in {"custom", "ollama-local"}:
                 raise fail(422, "API key cannot be empty.")
             creds["api_key"] = body.api_key
         if body.headers is not None:
@@ -130,6 +131,8 @@ async def patch_provider(
         p.encrypted_credentials = request.app.state.vault.seal(creds)
         await request.app.state.shared.delete("health:" + p.id)
         await request.app.state.shared.delete("discovery:" + p.id)
+        await request.app.state.shared.delete("quota:" + p.id)
+        await request.app.state.shared.delete("balance:" + p.id)
         p.discovered_at = None
     for key in ("name", "enabled", "priority", "pinned"):
         if key in data:

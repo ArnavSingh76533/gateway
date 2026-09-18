@@ -1,10 +1,10 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-ProviderKind = Literal[
-    "openrouter", "groq", "google", "huggingface", "together", "fireworks", "custom"
-]
+from .providers.catalog import DIRECT
+
+ProviderKind = str
 
 
 class Credentials(BaseModel):
@@ -48,7 +48,7 @@ class ModelInput(BaseModel):
 
 
 class ProviderInput(BaseModel):
-    kind: ProviderKind
+    kind: ProviderKind = Field(json_schema_extra={"enum": sorted(DIRECT)})
     name: str = Field(min_length=1, max_length=80)
     api_key: str = Field(default="", max_length=8192)
     base_url: str | None = Field(default=None, max_length=2048)
@@ -56,6 +56,13 @@ class ProviderInput(BaseModel):
     priority: int = Field(default=10, ge=0, le=1000)
     headers: dict[str, str] = Field(default_factory=dict)
     models: list[ModelInput] = Field(default_factory=list, max_length=200)
+
+    @field_validator("kind")
+    @classmethod
+    def known_provider(cls, value: str) -> str:
+        if value not in DIRECT:
+            raise ValueError("Choose a supported provider or the private 9router connector.")
+        return value
 
 
 class ProviderPatch(BaseModel):

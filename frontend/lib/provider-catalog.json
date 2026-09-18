@@ -1,0 +1,1823 @@
+[
+  {
+    "id": "alicode",
+    "name": "Alibaba",
+    "symbol": "ALi",
+    "color": "#FF6A00",
+    "url": "https://coding.dashscope.aliyuncs.com/v1",
+    "website": "https://bailian.console.aliyun.com",
+    "key_url": "https://bailian.console.aliyun.com/?apiKey=1",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "alicode-intl",
+    "name": "Alibaba Coding",
+    "symbol": "ALi",
+    "color": "#FF6A00",
+    "url": "https://coding-intl.dashscope.aliyuncs.com/v1",
+    "website": "https://www.alibabacloud.com/product/coding",
+    "key_url": "https://www.alibabacloud.com/product/coding",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "alims-intl",
+    "name": "Alibaba Studio",
+    "symbol": "ALi",
+    "color": "#FF6A00",
+    "url": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "website": "https://modelstudio.console.alibabacloud.com",
+    "key_url": "https://modelstudio.console.alibabacloud.com/?apiKey=1",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "alitp-intl",
+    "name": "Alibaba Token Plan",
+    "symbol": "ATP",
+    "color": "#FF6A00",
+    "url": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+    "website": "https://www.alibabacloud.com/campaign/ai-landing-page-token",
+    "key_url": "https://modelstudio.console.alibabacloud.com/?apiKey=1",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "anthropic",
+    "name": "Anthropic",
+    "symbol": "AN",
+    "color": "#D97757",
+    "url": "https://api.anthropic.com/v1",
+    "website": "https://console.anthropic.com",
+    "key_url": "https://console.anthropic.com/settings/keys",
+    "integration": "direct",
+    "protocol": "anthropic",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "api-airforce",
+    "name": "API.airforce",
+    "symbol": "AF",
+    "color": "#0EA5E9",
+    "url": "https://api.airforce/v1",
+    "website": "https://api.airforce",
+    "key_url": "https://api.airforce",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "azure",
+    "name": "Azure OpenAI",
+    "symbol": "AZ",
+    "color": "#0078D4",
+    "url": "",
+    "website": "https://azure.microsoft.com/en-us/products/ai-services/openai-service",
+    "key_url": "https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/OpenAI",
+    "integration": "direct",
+    "protocol": "azure",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey",
+    "note": "Enter your resource URL ending in /openai/v1. Use a deployment name as the model ID."
+  },
+  {
+    "id": "baidu",
+    "name": "Baidu Qianfan",
+    "symbol": "BD",
+    "color": "#2932E1",
+    "url": "https://qianfan.baidubce.com/v2",
+    "website": "https://cloud.baidu.com/product/qianfan.html",
+    "key_url": "https://console.bce.baidu.com/qianfan/ais/console/applicationConsole/application",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "bazaarlink",
+    "name": "Bazaarlink",
+    "symbol": "BZ",
+    "color": "#DC2626",
+    "url": "https://bazaarlink.ai/api/v1",
+    "website": "https://bazaarlink.ai",
+    "key_url": "https://bazaarlink.ai",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "blackbox",
+    "name": "Blackbox AI",
+    "symbol": "BB",
+    "color": "#5B5FEF",
+    "url": "https://api.blackbox.ai/v1",
+    "website": "https://blackbox.ai",
+    "key_url": "https://www.blackbox.ai/api-management",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "bluesminds",
+    "name": "BluesMinds",
+    "symbol": "BM",
+    "color": "#2563EB",
+    "url": "https://api.bluesminds.com/v1",
+    "website": "https://bluesminds.com",
+    "key_url": "https://bluesminds.com",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "byteplus",
+    "name": "BytePlus ModelArk",
+    "symbol": "BP",
+    "color": "#2563EB",
+    "url": "https://ark.ap-southeast.bytepluses.com/api/coding/v3",
+    "website": "https://console.byteplus.com/ark",
+    "key_url": "https://console.byteplus.com/ark/region:ark+ap-southeast-1/apiKey",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "cerebras",
+    "name": "Cerebras",
+    "symbol": "CB",
+    "color": "#FF4F00",
+    "url": "https://api.cerebras.ai/v1",
+    "website": "https://www.cerebras.ai",
+    "key_url": "https://cloud.cerebras.ai/platform",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "chutes",
+    "name": "Chutes AI",
+    "symbol": "CH",
+    "color": "#ffffffff",
+    "url": "https://llm.chutes.ai/v1",
+    "website": "https://chutes.ai",
+    "key_url": "https://chutes.ai/app/api",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "cloudflare-ai",
+    "name": "Cloudflare",
+    "symbol": "CF",
+    "color": "#F38020",
+    "url": "",
+    "website": "https://developers.cloudflare.com/workers-ai/",
+    "key_url": "https://dash.cloudflare.com/profile/api-tokens",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier",
+    "note": "Enter https://api.cloudflare.com/client/v4/accounts/YOUR_ACCOUNT_ID/ai/v1."
+  },
+  {
+    "id": "cohere",
+    "name": "Cohere",
+    "symbol": "CO",
+    "color": "#39594D",
+    "url": "https://api.cohere.ai/compatibility/v1",
+    "website": "https://cohere.com",
+    "key_url": "https://dashboard.cohere.com/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "custom",
+    "name": "Custom OpenAI-compatible",
+    "symbol": "<>",
+    "color": "#b4a0fa",
+    "website": "",
+    "key_url": "",
+    "category": "apikey",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "url": "",
+    "integration": "direct",
+    "note": "Bring any OpenAI-compatible endpoint. Private hosts require the administrator allowlist."
+  },
+  {
+    "id": "deepseek",
+    "name": "DeepSeek",
+    "symbol": "DS",
+    "color": "#4D6BFE",
+    "url": "https://api.deepseek.com",
+    "website": "https://deepseek.com",
+    "key_url": "https://platform.deepseek.com/api_keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "featherless",
+    "name": "Featherless",
+    "symbol": "FL",
+    "color": "#111827",
+    "url": "https://api.featherless.ai/v1",
+    "website": "https://featherless.ai",
+    "key_url": "https://featherless.ai/account/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "fireworks",
+    "name": "Fireworks AI",
+    "symbol": "FW",
+    "color": "#7B2EF2",
+    "url": "https://api.fireworks.ai/inference/v1",
+    "website": "https://fireworks.ai",
+    "key_url": "https://fireworks.ai/account/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "glm-cn",
+    "name": "GLM (China)",
+    "symbol": "GC",
+    "color": "#DC2626",
+    "url": "https://open.bigmodel.cn/api/coding/paas/v4",
+    "website": "https://open.bigmodel.cn",
+    "key_url": "https://open.bigmodel.cn/usercenter/apikeys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "glm",
+    "name": "GLM Coding",
+    "symbol": "GL",
+    "color": "#2563EB",
+    "url": "https://api.z.ai/api/anthropic/v1",
+    "website": "https://open.bigmodel.cn",
+    "key_url": "https://open.bigmodel.cn/usercenter/apikeys",
+    "integration": "direct",
+    "protocol": "anthropic",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "google",
+    "name": "Google AI Studio",
+    "symbol": "G",
+    "color": "#8baaff",
+    "website": "https://ai.google.dev",
+    "key_url": "https://aistudio.google.com/apikey",
+    "category": "apikey",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "integration": "direct"
+  },
+  {
+    "id": "groq",
+    "name": "Groq",
+    "symbol": "GQ",
+    "color": "#F55036",
+    "url": "https://api.groq.com/openai/v1",
+    "website": "https://groq.com",
+    "key_url": "https://console.groq.com/keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "huggingface",
+    "name": "HuggingFace",
+    "symbol": "HF",
+    "color": "#FFD21E",
+    "url": "https://router.huggingface.co/v1",
+    "website": "https://huggingface.co",
+    "key_url": "https://huggingface.co/settings/tokens",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "hyperbolic",
+    "name": "Hyperbolic",
+    "symbol": "HY",
+    "color": "#00D4FF",
+    "url": "https://api.hyperbolic.xyz/v1",
+    "website": "https://hyperbolic.xyz",
+    "key_url": "https://app.hyperbolic.xyz/settings",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "jina-ai",
+    "name": "Jina AI",
+    "symbol": "JA",
+    "color": "#2563EB",
+    "url": "https://api.jina.ai/v1",
+    "website": "https://jina.ai",
+    "key_url": "https://jina.ai/?sui=apikey",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "kilo-gateway",
+    "name": "Kilo Gateway",
+    "symbol": "KG",
+    "color": "#8B5CF6",
+    "url": "https://api.kilo.ai/api/gateway",
+    "website": "https://kilo.ai",
+    "key_url": "https://kilo.ai/dashboard?tab=apiKeys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "llm7",
+    "name": "LLM7",
+    "symbol": "L7",
+    "color": "#7C3AED",
+    "url": "https://api.llm7.io/v1",
+    "website": "https://llm7.io",
+    "key_url": "https://llm7.io",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "minimax-cn",
+    "name": "Minimax (China)",
+    "symbol": "MC",
+    "color": "#DC2626",
+    "url": "https://api.minimaxi.com/anthropic/v1",
+    "website": "https://www.minimaxi.com",
+    "key_url": "https://platform.minimaxi.com/user-center/basic-information/interface-key",
+    "integration": "direct",
+    "protocol": "anthropic",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "minimax",
+    "name": "Minimax Coding",
+    "symbol": "MM",
+    "color": "#7C3AED",
+    "url": "https://api.minimax.io/anthropic/v1",
+    "website": "https://www.minimaxi.com",
+    "key_url": "https://platform.minimaxi.com/user-center/basic-information/interface-key",
+    "integration": "direct",
+    "protocol": "anthropic",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "mistral",
+    "name": "Mistral",
+    "symbol": "MI",
+    "color": "#FF7000",
+    "url": "https://api.mistral.ai/v1",
+    "website": "https://mistral.ai",
+    "key_url": "https://console.mistral.ai/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "morph",
+    "name": "Morph",
+    "symbol": "MP",
+    "color": "#14B8A6",
+    "url": "https://api.morphllm.com/v1",
+    "website": "https://morphllm.com",
+    "key_url": "https://morphllm.com",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "nebius",
+    "name": "Nebius AI",
+    "symbol": "NB",
+    "color": "#6C5CE7",
+    "url": "https://api.studio.nebius.ai/v1",
+    "website": "https://nebius.com",
+    "key_url": "https://studio.nebius.com/settings/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "nvidia",
+    "name": "NVIDIA NIM",
+    "symbol": "NV",
+    "color": "#76B900",
+    "url": "https://integrate.api.nvidia.com/v1",
+    "website": "https://developer.nvidia.com/nim",
+    "key_url": "https://build.nvidia.com/settings/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "ollama",
+    "name": "Ollama Cloud",
+    "symbol": "OL",
+    "color": "#ffffffff",
+    "url": "https://ollama.com/v1",
+    "website": "https://ollama.com",
+    "key_url": "https://ollama.com/settings/keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "ollama-local",
+    "name": "Ollama Local",
+    "symbol": "OL",
+    "color": "#ffffffff",
+    "url": "",
+    "website": "https://ollama.com",
+    "key_url": "",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey",
+    "note": "Enter your server /v1 URL. Private hosts must be allowed by the gateway administrator."
+  },
+  {
+    "id": "openai",
+    "name": "OpenAI",
+    "symbol": "OA",
+    "color": "#10A37F",
+    "url": "https://api.openai.com/v1",
+    "website": "https://platform.openai.com",
+    "key_url": "https://platform.openai.com/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "opencode",
+    "name": "OpenCode Free",
+    "symbol": "OC",
+    "color": "#E87040",
+    "url": "https://opencode.ai/zen/v1",
+    "website": "",
+    "key_url": "",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "free"
+  },
+  {
+    "id": "opencode-go",
+    "name": "OpenCode Go",
+    "symbol": "OC",
+    "color": "#E87040",
+    "url": "https://opencode.ai/zen/go/v1",
+    "website": "https://opencode.ai/auth",
+    "key_url": "https://opencode.ai/auth",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "openrouter",
+    "name": "OpenRouter",
+    "symbol": "OR",
+    "color": "#F97316",
+    "url": "https://openrouter.ai/api/v1",
+    "website": "https://openrouter.ai",
+    "key_url": "https://openrouter.ai/settings/keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key",
+      "oauth"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "perplexity",
+    "name": "Perplexity",
+    "symbol": "PP",
+    "color": "#20808D",
+    "url": "https://api.perplexity.ai",
+    "website": "https://www.perplexity.ai",
+    "key_url": "https://www.perplexity.ai/settings/api",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "poolside",
+    "name": "Poolside",
+    "symbol": "PS",
+    "color": "#0EA5E9",
+    "url": "https://inference.poolside.ai/v1",
+    "website": "https://poolside.ai",
+    "key_url": "https://platform.poolside.ai/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "9router",
+    "name": "Private 9router",
+    "symbol": "9R",
+    "color": "#b4a0fa",
+    "website": "https://github.com/decolua/9router",
+    "key_url": "",
+    "category": "apikey",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "url": "",
+    "integration": "direct",
+    "note": "Connect your private 9router /v1 endpoint and gateway API key. Authorize subscriptions in your own 9router dashboard; all of its published model routes are discovered here."
+  },
+  {
+    "id": "recraft",
+    "name": "Recraft",
+    "symbol": "RC",
+    "color": "#EC4899",
+    "url": "https://external.api.recraft.ai/v1",
+    "website": "https://recraft.ai",
+    "key_url": "https://www.recraft.ai/profile/api",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "sambanova",
+    "name": "SambaNova",
+    "symbol": "SN",
+    "color": "#F97316",
+    "url": "https://api.sambanova.ai/v1",
+    "website": "https://sambanova.ai",
+    "key_url": "https://cloud.sambanova.ai/apis",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "siliconflow",
+    "name": "SiliconFlow",
+    "symbol": "SF",
+    "color": "#5B6EF5",
+    "url": "https://api.siliconflow.com/v1",
+    "website": "https://cloud.siliconflow.com",
+    "key_url": "https://cloud.siliconflow.com/account/ak",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "tencent",
+    "name": "Tencent Hunyuan",
+    "symbol": "HY",
+    "color": "#0052D9",
+    "url": "https://api.hunyuan.cloud.tencent.com/v1",
+    "website": "https://cloud.tencent.com/product/hunyuan",
+    "key_url": "https://console.cloud.tencent.com/hunyuan/api-key",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "together",
+    "name": "Together AI",
+    "symbol": "TG",
+    "color": "#0F6FFF",
+    "url": "https://api.together.ai/v1",
+    "website": "https://www.together.ai",
+    "key_url": "https://api.together.xyz/settings/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "tokenrouter",
+    "name": "TokenRouter",
+    "symbol": "TR",
+    "color": "#0EA5E9",
+    "url": "https://api.tokenrouter.com/v1",
+    "website": "https://www.tokenrouter.com",
+    "key_url": "https://www.tokenrouter.com",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "venice",
+    "name": "Venice AI",
+    "symbol": "VE",
+    "color": "#DC2626",
+    "url": "https://api.venice.ai/api/v1",
+    "website": "https://venice.ai",
+    "key_url": "https://venice.ai/settings/api",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "vercel-ai-gateway",
+    "name": "Vercel AI Gateway",
+    "symbol": "VG",
+    "color": "#111827",
+    "url": "https://ai-gateway.vercel.sh/v1",
+    "website": "https://vercel.com/ai-gateway",
+    "key_url": "https://vercel.com/dashboard/~/ai-gateway",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "volcengine-ark",
+    "name": "Volcengine Ark",
+    "symbol": "ARK",
+    "color": "#1677FF",
+    "url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "website": "https://ark.cn-beijing.volces.com",
+    "key_url": "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "voyage-ai",
+    "name": "Voyage AI",
+    "symbol": "VG",
+    "color": "#0EA5E9",
+    "url": "https://api.voyageai.com/v1",
+    "website": "https://www.voyageai.com",
+    "key_url": "https://dash.voyageai.com/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "xai",
+    "name": "xAI (Grok)",
+    "symbol": "XA",
+    "color": "#1DA1F2",
+    "url": "https://api.x.ai/v1",
+    "website": "https://x.ai",
+    "key_url": "https://console.x.ai",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "xiaomi-mimo",
+    "name": "Xiaomi MiMo",
+    "symbol": "XM",
+    "color": "#FF6900",
+    "url": "https://api.xiaomimimo.com/v1",
+    "website": "https://xiaomimimo.com",
+    "key_url": "https://platform.xiaomimimo.com/console/api-keys",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "xiaomi-tokenplan",
+    "name": "Xiaomi MiMo (Token Plan)",
+    "symbol": "XT",
+    "color": "#FF6700",
+    "url": "https://token-plan-sgp.xiaomimimo.com/v1",
+    "website": "https://mimo.xiaomi.com",
+    "key_url": "https://mimo.xiaomi.com",
+    "integration": "direct",
+    "protocol": "openai",
+    "auth": [
+      "api_key"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "antigravity",
+    "name": "Antigravity",
+    "symbol": "AN",
+    "color": "#F59E0B",
+    "url": "",
+    "website": "https://antigravity.google",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "assemblyai",
+    "name": "AssemblyAI",
+    "symbol": "AA",
+    "color": "#0062FF",
+    "url": "",
+    "website": "https://assemblyai.com",
+    "key_url": "https://www.assemblyai.com/app/api-keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "aws-polly",
+    "name": "AWS Polly",
+    "symbol": "PL",
+    "color": "#FF9900",
+    "url": "",
+    "website": "https://aws.amazon.com/polly/",
+    "key_url": "https://console.aws.amazon.com/iam/home#/security_credentials",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "black-forest-labs",
+    "name": "Black Forest Labs",
+    "symbol": "BF",
+    "color": "#111827",
+    "url": "",
+    "website": "https://blackforestlabs.ai",
+    "key_url": "https://api.bfl.ai",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "brave-search",
+    "name": "Brave Search",
+    "symbol": "BR",
+    "color": "#FB542B",
+    "url": "",
+    "website": "https://brave.com/search/api",
+    "key_url": "https://api-dashboard.search.brave.com/app/keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "cartesia",
+    "name": "Cartesia",
+    "symbol": "CA",
+    "color": "#FF4F8B",
+    "url": "",
+    "website": "https://cartesia.ai",
+    "key_url": "https://play.cartesia.ai/keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "claude",
+    "name": "Claude Code",
+    "symbol": "CL",
+    "color": "#D97757",
+    "url": "",
+    "website": "https://claude.ai",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "anthropic",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "cline",
+    "name": "Cline",
+    "symbol": "CL",
+    "color": "#5B9BD5",
+    "url": "",
+    "website": "https://cline.bot",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "clinepass",
+    "name": "ClinePass",
+    "symbol": "CP",
+    "color": "#5B9BD5",
+    "url": "",
+    "website": "https://cline.bot",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "codebuddy-intl",
+    "name": "CodeBuddy",
+    "symbol": "CO",
+    "color": "#006EFF",
+    "url": "",
+    "website": "https://www.codebuddy.ai",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "codebuddy-cn",
+    "name": "CodeBuddy CN",
+    "symbol": "CO",
+    "color": "#006EFF",
+    "url": "",
+    "website": "https://copilot.tencent.com",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "comfyui",
+    "name": "ComfyUI",
+    "symbol": "CF",
+    "color": "#4CAF50",
+    "url": "",
+    "website": "https://github.com/comfyanonymous/ComfyUI",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "commandcode",
+    "name": "Command Code",
+    "symbol": "CC",
+    "color": "#000000",
+    "url": "",
+    "website": "https://commandcode.ai",
+    "key_url": "https://commandcode.ai/studio",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "coqui",
+    "name": "Coqui TTS",
+    "symbol": "CQ",
+    "color": "#10B981",
+    "url": "",
+    "website": "https://github.com/coqui-ai/TTS",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "cursor",
+    "name": "Cursor IDE",
+    "symbol": "CU",
+    "color": "#00D4AA",
+    "url": "",
+    "website": "https://cursor.com",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "deepgram",
+    "name": "Deepgram",
+    "symbol": "DG",
+    "color": "#13EF93",
+    "url": "",
+    "website": "https://deepgram.com",
+    "key_url": "https://console.deepgram.com/api-keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "edge-tts",
+    "name": "Edge TTS",
+    "symbol": "ET",
+    "color": "#0078D4",
+    "url": "",
+    "website": "",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "elevenlabs",
+    "name": "ElevenLabs",
+    "symbol": "EL",
+    "color": "#6C47FF",
+    "url": "",
+    "website": "https://elevenlabs.io",
+    "key_url": "https://elevenlabs.io/app/settings/api-keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "exa",
+    "name": "Exa",
+    "symbol": "EX",
+    "color": "#2563EB",
+    "url": "",
+    "website": "https://exa.ai",
+    "key_url": "https://dashboard.exa.ai/api-keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "fal-ai",
+    "name": "Fal.ai",
+    "symbol": "FL",
+    "color": "#2563EB",
+    "url": "",
+    "website": "https://fal.ai",
+    "key_url": "https://fal.ai/dashboard/keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "firecrawl",
+    "name": "Firecrawl",
+    "symbol": "FC",
+    "color": "#F59E0B",
+    "url": "",
+    "website": "https://firecrawl.dev",
+    "key_url": "https://www.firecrawl.dev/app/api-keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "fish-audio",
+    "name": "Fish Audio",
+    "symbol": "FA",
+    "color": "#1E9BF0",
+    "url": "",
+    "website": "https://fish.audio",
+    "key_url": "https://fish.audio/app/api-keys/",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "gemini-cli",
+    "name": "Gemini CLI",
+    "symbol": "GE",
+    "color": "#4285F4",
+    "url": "",
+    "website": "https://github.com/google-gemini/gemini-cli",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "free"
+  },
+  {
+    "id": "github",
+    "name": "GitHub Copilot",
+    "symbol": "GI",
+    "color": "#333333",
+    "url": "",
+    "website": "https://github.com/features/copilot",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "gitlab",
+    "name": "GitLab Duo",
+    "symbol": "GL",
+    "color": "#FC6D26",
+    "url": "",
+    "website": "https://gitlab.com",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "google-pse",
+    "name": "Google PSE",
+    "symbol": "GP",
+    "color": "#4285F4",
+    "url": "",
+    "website": "https://programmablesearchengine.google.com",
+    "key_url": "https://programmablesearchengine.google.com/controlpanel/create",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "google-tts",
+    "name": "Google TTS",
+    "symbol": "GT",
+    "color": "#4285F4",
+    "url": "",
+    "website": "",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "grok-cli",
+    "name": "Grok CLI (Grok Build)",
+    "symbol": "GC",
+    "color": "#1DA1F2",
+    "url": "",
+    "website": "https://x.ai",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "grok-web",
+    "name": "Grok Web (Subscription)",
+    "symbol": "GW",
+    "color": "#1DA1F2",
+    "url": "",
+    "website": "https://grok.com",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "webCookie"
+  },
+  {
+    "id": "iflow",
+    "name": "iFlow AI",
+    "symbol": "IF",
+    "color": "#6366F1",
+    "url": "",
+    "website": "https://iflow.cn",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "inworld",
+    "name": "Inworld TTS",
+    "symbol": "IW",
+    "color": "#FF6B6B",
+    "url": "",
+    "website": "https://inworld.ai",
+    "key_url": "https://platform.inworld.ai/api-keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "jina-reader",
+    "name": "Jina Reader",
+    "symbol": "JR",
+    "color": "#000000",
+    "url": "",
+    "website": "https://jina.ai/reader",
+    "key_url": "https://jina.ai/?sui=apikey",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "kilocode",
+    "name": "Kilo Code",
+    "symbol": "KC",
+    "color": "#FF6B35",
+    "url": "",
+    "website": "https://kilocode.ai",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "kimchi",
+    "name": "Kimchi",
+    "symbol": "KC",
+    "color": "#FF521D",
+    "url": "",
+    "website": "https://kimchi.dev",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "kimi",
+    "name": "Kimi",
+    "symbol": "KM",
+    "color": "#1E3A8A",
+    "url": "",
+    "website": "https://kimi.moonshot.cn",
+    "key_url": "https://platform.moonshot.ai/console/api-keys",
+    "integration": "bridge",
+    "protocol": "anthropic",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "kiro",
+    "name": "Kiro AI",
+    "symbol": "KI",
+    "color": "#FF6B35",
+    "url": "",
+    "website": "https://kiro.dev",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "free"
+  },
+  {
+    "id": "linkup",
+    "name": "Linkup",
+    "symbol": "LK",
+    "color": "#0EA5E9",
+    "url": "",
+    "website": "https://linkup.so",
+    "key_url": "https://app.linkup.so/api-keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "local-device",
+    "name": "Local Device",
+    "symbol": "LD",
+    "color": "#64748B",
+    "url": "",
+    "website": "",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "mimo-free",
+    "name": "MiMo Code Free",
+    "symbol": "MF",
+    "color": "#FF6900",
+    "url": "",
+    "website": "",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "free"
+  },
+  {
+    "id": "mmf",
+    "name": "MMF",
+    "symbol": "MF",
+    "color": "#6366F1",
+    "url": "",
+    "website": "",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "nanobanana",
+    "name": "NanoBanana API",
+    "symbol": "🍌",
+    "color": "#FFD700",
+    "url": "",
+    "website": "https://nanobananaapi.ai",
+    "key_url": "https://nanobananaapi.ai/dashboard",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "ollama-search",
+    "name": "Ollama Search",
+    "symbol": "OL",
+    "color": "#ffffff",
+    "url": "",
+    "website": "https://ollama.com",
+    "key_url": "https://ollama.com/settings/keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "codex",
+    "name": "OpenAI Codex",
+    "symbol": "CO",
+    "color": "#3B82F6",
+    "url": "",
+    "website": "https://chatgpt.com/codex",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "perplexity-agent",
+    "name": "Perplexity Agent",
+    "symbol": "PA",
+    "color": "#20808D",
+    "url": "",
+    "website": "https://www.perplexity.ai",
+    "key_url": "https://www.perplexity.ai/settings/api",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "perplexity-web",
+    "name": "Perplexity Web (Pro/Max)",
+    "symbol": "PW",
+    "color": "#20808D",
+    "url": "",
+    "website": "https://www.perplexity.ai",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "webCookie"
+  },
+  {
+    "id": "playht",
+    "name": "PlayHT",
+    "symbol": "PH",
+    "color": "#00B4D8",
+    "url": "",
+    "website": "https://play.ht",
+    "key_url": "https://play.ht/studio/api-access",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "qoder",
+    "name": "Qoder",
+    "symbol": "QO",
+    "color": "#EC4899",
+    "url": "",
+    "website": "https://qoder.com",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  },
+  {
+    "id": "runwayml",
+    "name": "Runway ML",
+    "symbol": "RW",
+    "color": "#000000",
+    "url": "",
+    "website": "https://runwayml.com",
+    "key_url": "https://dev.runwayml.com",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "sdwebui",
+    "name": "SD WebUI",
+    "symbol": "SD",
+    "color": "#FF7043",
+    "url": "",
+    "website": "https://github.com/AUTOMATIC1111/stable-diffusion-webui",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "searchapi",
+    "name": "SearchAPI",
+    "symbol": "SA",
+    "color": "#0EA5A4",
+    "url": "",
+    "website": "https://www.searchapi.io",
+    "key_url": "https://www.searchapi.io/dashboard",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "searxng",
+    "name": "SearXNG",
+    "symbol": "SX",
+    "color": "#3B82F6",
+    "url": "",
+    "website": "https://docs.searxng.org",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "selfhosted-embedding",
+    "name": "Self-hosted Embedding",
+    "symbol": "SE",
+    "color": "#ffffffff",
+    "url": "",
+    "website": "https://github.com/ggml-org/llama.cpp",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "selfhosted-stt",
+    "name": "Self-hosted STT",
+    "symbol": "ST",
+    "color": "#ffffffff",
+    "url": "",
+    "website": "https://github.com/ggml-org/whisper.cpp",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "selfhosted-tts",
+    "name": "Self-hosted TTS",
+    "symbol": "TT",
+    "color": "#ffffffff",
+    "url": "",
+    "website": "https://github.com/remsky/Kokoro-FastAPI",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "serper",
+    "name": "Serper",
+    "symbol": "SP",
+    "color": "#4F46E5",
+    "url": "",
+    "website": "https://serper.dev",
+    "key_url": "https://serper.dev/api-key",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "stability-ai",
+    "name": "Stability AI",
+    "symbol": "SA",
+    "color": "#8B5CF6",
+    "url": "",
+    "website": "https://stability.ai",
+    "key_url": "https://platform.stability.ai/account/keys",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "tavily",
+    "name": "Tavily",
+    "symbol": "TV",
+    "color": "#5B21B6",
+    "url": "",
+    "website": "https://tavily.com",
+    "key_url": "https://app.tavily.com/home",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "topaz",
+    "name": "Topaz",
+    "symbol": "TP",
+    "color": "#059669",
+    "url": "",
+    "website": "https://topazlabs.com",
+    "key_url": "https://topazlabs.com/account",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "tortoise",
+    "name": "Tortoise TTS",
+    "symbol": "TT",
+    "color": "#7C3AED",
+    "url": "",
+    "website": "https://github.com/neonbjb/tortoise-tts",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "vertex",
+    "name": "Vertex AI",
+    "symbol": "VX",
+    "color": "#4285F4",
+    "url": "",
+    "website": "https://cloud.google.com/vertex-ai",
+    "key_url": "https://console.cloud.google.com/iam-admin/serviceaccounts",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "freeTier"
+  },
+  {
+    "id": "vertex-partner",
+    "name": "Vertex Partner",
+    "symbol": "VP",
+    "color": "#34A853",
+    "url": "",
+    "website": "https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-partner-models",
+    "key_url": "https://console.cloud.google.com/iam-admin/serviceaccounts",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "xquik",
+    "name": "Xquik",
+    "symbol": "XQ",
+    "color": "#5C3327",
+    "url": "",
+    "website": "https://docs.xquik.com/api-reference/x/search-tweets",
+    "key_url": "https://xquik.com",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "youcom",
+    "name": "You.com Search",
+    "symbol": "YC",
+    "color": "#7C3AED",
+    "url": "",
+    "website": "https://you.com",
+    "key_url": "https://api.you.com",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "apikey"
+  },
+  {
+    "id": "zed",
+    "name": "Zed",
+    "symbol": "ZE",
+    "color": "#A855F7",
+    "url": "",
+    "website": "https://zed.dev",
+    "key_url": "",
+    "integration": "bridge",
+    "protocol": "openai",
+    "auth": [
+      "9router"
+    ],
+    "category": "oauth"
+  }
+]
