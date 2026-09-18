@@ -350,6 +350,17 @@ export function ProviderForm({
             {providerInfo[kind]?.note && (
               <p className="form-note">{providerInfo[kind].note}</p>
             )}
+            {!provider &&
+              providerInfo[kind]?.category === "oauth" &&
+              kind !== "openrouter" && (
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => setKind("9router")}
+                >
+                  Connect subscription via private 9router
+                </button>
+              )}
             <label>
               {provider
                 ? "Replace API key (optional)"
@@ -359,6 +370,7 @@ export function ProviderForm({
               <input
                 type="password"
                 name="api_key"
+                key={kind + "-key"}
                 placeholder={
                   provider
                     ? "Leave empty to keep saved key"
@@ -401,6 +413,7 @@ export function ProviderForm({
                 Headers as JSON
                 <textarea
                   name="headers"
+                  key={kind + "-headers"}
                   aria-invalid={!!headersError}
                   aria-describedby={headersError ? "headers-error" : undefined}
                   onChange={() => setHeadersError("")}

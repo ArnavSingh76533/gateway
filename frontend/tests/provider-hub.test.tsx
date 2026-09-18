@@ -56,16 +56,14 @@ it("searches the complete provider directory and routes subscription choices to 
 });
 
 it("offers OpenRouter OAuth without requiring an API key and reports failed initiation", async () => {
-  const fetcher = vi
-    .fn()
-    .mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          error: { message: "Choose a different connection name." },
-        }),
-        { status: 409 },
-      ),
-    );
+  const fetcher = vi.fn().mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        error: { message: "Choose a different connection name." },
+      }),
+      { status: 409 },
+    ),
+  );
   vi.stubGlobal("fetch", fetcher);
   render(<ProviderForm onClose={vi.fn()} onSaved={vi.fn()} />);
   const user = userEvent.setup();
@@ -112,6 +110,28 @@ it("connects a private 9router endpoint using its gateway key", async () => {
     base_url: "https://bridge.example/v1",
     api_key: "test-bridge-key",
   });
+});
+
+it("clears credentials when switching providers and offers the subscription bridge", async () => {
+  render(<ProviderForm onClose={vi.fn()} onSaved={vi.fn()} />);
+  const user = userEvent.setup();
+  fireEvent.change(screen.getByLabelText("Provider API key"), {
+    target: { value: "first-provider-secret" },
+  });
+  await user.click(screen.getByText("Advanced · custom headers"));
+  fireEvent.change(screen.getByLabelText("Headers as JSON"), {
+    target: { value: '{"Authorization":"private"}' },
+  });
+  await user.selectOptions(screen.getByLabelText("Provider"), "xai");
+  expect(screen.getByLabelText("Provider API key")).toHaveValue("");
+  expect(screen.getByLabelText("Headers as JSON")).toHaveValue("");
+  await user.click(
+    screen.getByRole("button", {
+      name: "Connect subscription via private 9router",
+    }),
+  );
+  expect(screen.getByLabelText("Provider")).toHaveValue("9router");
+  expect(screen.getByLabelText("9router gateway API key")).toHaveValue("");
 });
 
 it("distinguishes expired token windows, unknown values, and credit balances", async () => {
