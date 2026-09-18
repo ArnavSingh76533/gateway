@@ -51,7 +51,7 @@ export default function Documentation({
           {[
             [
               "Add your providers",
-              "Save a key from OpenRouter, Groq, Google AI Studio, Hugging Face, Together, Fireworks, or a custom endpoint.",
+              "Search the provider directory to add API keys, sign in with OpenRouter, or connect a private 9router instance for subscription accounts.",
             ],
             [
               "Create a Gateway API key",
@@ -127,6 +127,30 @@ export default function Documentation({
             </tbody>
           </table>
         </div>
+      </section>
+      <section className="panel docs-steps">
+        <h2>Subscription providers and limits</h2>
+        <p className="muted">
+          For OpenRouter, choose Sign in with OpenRouter in the connection form.
+          For other subscription providers, authorize your accounts in your
+          private 9router dashboard, then connect its /v1 endpoint and gateway
+          API key here. A hosted gateway needs an endpoint it can reach;
+          localhost refers to the gateway server.
+        </p>
+        <p className="muted">
+          Tokens &amp; limits shows observed rate windows and reset times.
+          Supported credit balances are shown separately. Providers that do not
+          report quotas stay unknown. Subscription quota details remain in your
+          private 9router dashboard.
+        </p>
+        <a
+          className="text-button"
+          href="https://github.com/ArnavSingh76533/gateway/blob/main/docs/provider-hub.md"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Private 9router setup and provider guide <ExternalLink size={14} />
+        </a>
       </section>
       <div className="two-columns docs-notes">
         <div className="note-panel">

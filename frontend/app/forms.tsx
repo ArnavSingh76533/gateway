@@ -194,17 +194,20 @@ export function AuthForm({
 }
 export function ProviderForm({
   provider,
+  initialKind = "openrouter",
   onClose,
   onSaved,
 }: {
   provider?: Provider;
+  initialKind?: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [kind, setKind] = useState(provider?.kind || "openrouter"),
+  const [kind, setKind] = useState(provider?.kind || initialKind),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const [headersError, setHeadersError] = useState("");
+  const [authMethod, setAuthMethod] = useState("api_key");
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -212,6 +215,17 @@ export function ProviderForm({
     setHeadersError("");
     const f = new FormData(e.currentTarget);
     try {
+      if (!provider && kind === "openrouter" && authMethod === "oauth") {
+        const result = await api<{ authorization_url: string }>(
+          "/oauth/openrouter/start",
+          { method: "POST", body: JSON.stringify({ name: f.get("name") }) },
+        );
+        const destination = new URL(result.authorization_url);
+        if (destination.origin !== "https://openrouter.ai")
+          throw new Error("Unexpected sign-in destination.");
+        window.location.assign(destination.href);
+        return;
+      }
       const raw = String(f.get("headers") || "").trim();
       let headers: Record<string, string> | undefined;
       try {
@@ -284,69 +298,130 @@ export function ProviderForm({
             maxLength={80}
           />
         </label>
-        <label>
-          {provider ? "Replace API key (optional)" : "Provider API key"}
-          <input
-            type="password"
-            name="api_key"
-            placeholder={
-              provider
-                ? "Leave empty to keep saved key"
-                : "Paste your provider key"
-            }
-            autoComplete="off"
-            required={!provider && kind !== "custom"}
-          />
-        </label>
-        {!provider && (
-          <label>
-            Base URL
-            <input
-              name="base_url"
-              type="url"
-              key={kind + "url"}
-              defaultValue={providerInfo[kind].url}
-              placeholder="https://your-endpoint.com/v1"
-              required={kind === "custom"}
-            />
-          </label>
+        {!provider && kind === "openrouter" && (
+          <div
+            className="auth-methods"
+            role="group"
+            aria-label="Authentication method"
+          >
+            <button
+              type="button"
+              className={`button ${authMethod === "api_key" ? "primary" : ""}`}
+              aria-pressed={authMethod === "api_key"}
+              onClick={() => setAuthMethod("api_key")}
+            >
+              Use API key
+            </button>
+            <button
+              type="button"
+              className={`button ${authMethod === "oauth" ? "primary" : ""}`}
+              aria-pressed={authMethod === "oauth"}
+              onClick={() => setAuthMethod("oauth")}
+            >
+              Sign in with OpenRouter
+            </button>
+          </div>
         )}
-        <label>
-          Priority <span className="muted">— lower numbers are preferred</span>
-          <input
-            type="number"
-            name="priority"
-            min={0}
-            max={1000}
-            defaultValue={provider?.priority ?? 10}
-            required
-          />
-        </label>
-        <details>
-          <summary>Advanced · custom headers</summary>
-          <label>
-            Headers as JSON
-            <textarea
-              name="headers"
-              aria-invalid={!!headersError}
-              aria-describedby={headersError ? "headers-error" : undefined}
-              onChange={() => setHeadersError("")}
-              rows={3}
-              placeholder={'{"X-Organization": "your-org"}'}
-            />
-            {headersError && (
-              <small className="field-error" id="headers-error">
-                {headersError}
-              </small>
-            )}
-          </label>
+        {!provider && kind === "openrouter" && authMethod === "oauth" ? (
           <p className="form-note">
-            {provider
-              ? "Omit to keep existing headers; enter {} to clear. "
-              : " "}
-            Custom authorization headers override Bearer authentication.
+            Continue to OpenRouter to authorize a key. You will return to this
+            workspace; your OpenRouter password stays with OpenRouter.
           </p>
-        </details>
+        ) : (
+          <>
+            {kind === "9router" && (
+              <div className="bridge-guide">
+                <strong>Connect your private 9router</strong>
+                <p>
+                  Authorize subscription accounts in your own 9router dashboard
+                  first. Enter its reachable /v1 endpoint and gateway API key
+                  below. Models keep their provider prefixes so each route stays
+                  distinct.
+                </p>
+                <a
+                  href="https://github.com/decolua/9router#readme"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  9router setup guide ↗
+                </a>
+              </div>
+            )}
+            {providerInfo[kind]?.note && (
+              <p className="form-note">{providerInfo[kind].note}</p>
+            )}
+            <label>
+              {provider
+                ? "Replace API key (optional)"
+                : kind === "9router"
+                  ? "9router gateway API key"
+                  : "Provider API key"}
+              <input
+                type="password"
+                name="api_key"
+                placeholder={
+                  provider
+                    ? "Leave empty to keep saved key"
+                    : "Paste your provider key"
+                }
+                autoComplete="off"
+                required={
+                  !provider && !["custom", "ollama-local"].includes(kind)
+                }
+              />
+            </label>
+            {!provider && (
+              <label>
+                Base URL
+                <input
+                  name="base_url"
+                  type="url"
+                  key={kind + "url"}
+                  defaultValue={providerInfo[kind].url}
+                  placeholder="https://your-endpoint.com/v1"
+                  required={!providerInfo[kind].url}
+                />
+              </label>
+            )}
+            <label>
+              Priority{" "}
+              <span className="muted">— lower numbers are preferred</span>
+              <input
+                type="number"
+                name="priority"
+                min={0}
+                max={1000}
+                defaultValue={provider?.priority ?? 10}
+                required
+              />
+            </label>
+            <details>
+              <summary>Advanced · custom headers</summary>
+              <label>
+                Headers as JSON
+                <textarea
+                  name="headers"
+                  aria-invalid={!!headersError}
+                  aria-describedby={headersError ? "headers-error" : undefined}
+                  onChange={() => setHeadersError("")}
+                  rows={3}
+                  placeholder={'{"X-Organization": "your-org"}'}
+                />
+                {headersError && (
+                  <small className="field-error" id="headers-error">
+                    {headersError}
+                  </small>
+                )}
+              </label>
+              <p className="form-note">
+                {provider
+                  ? "Omit to keep existing headers; enter {} to clear. "
+                  : " "}
+                Custom authorization headers override Bearer authentication.
+              </p>
+            </details>
+          </>
+        )}
         {error && <Banner tone="error">{error}</Banner>}
         <div className="form-actions">
           <button type="button" className="button" onClick={onClose}>
@@ -359,10 +434,12 @@ export function ProviderForm({
               <KeyRound size={16} />
             )}{" "}
             {busy
-              ? "Connecting & discovering…"
-              : provider
-                ? "Save connection"
-                : "Connect provider"}
+              ? "Connecting…"
+              : !provider && kind === "openrouter" && authMethod === "oauth"
+                ? "Continue to OpenRouter"
+                : provider
+                  ? "Save connection"
+                  : "Connect provider"}
           </button>
         </div>
       </form>

@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass, field
-from typing import Any, ClassVar
+from typing import Any, Awaitable, Callable, ClassVar
 
 import httpx
 
@@ -100,6 +100,8 @@ class OpenAIAdapter:
         self.base_url = base_url.rstrip("/")
         self.credentials = credentials
         self.max_bytes = max_bytes
+        self.on_headers: Callable[[httpx.Headers], Awaitable[None]] | None = None
+        self.quota_model: str | None = None
 
     def headers(self) -> dict[str, str]:
         headers = {"accept": "application/json"}
@@ -113,6 +115,7 @@ class OpenAIAdapter:
     ) -> httpx.Response:
         if endpoint not in self.endpoints:
             raise UpstreamError(400, "unsupported_endpoint")
+        self.quota_model = payload.get("model")
         args: dict[str, Any] = {"data": payload, "files": files} if files else {"json": payload}
         req = self.client.build_request(
             "POST", self.base_url + "/" + endpoint, headers=self.headers(), **args
@@ -122,6 +125,8 @@ class OpenAIAdapter:
         return response
 
     async def check(self, response: httpx.Response) -> None:
+        if self.on_headers:
+            await self.on_headers(response.headers)
         if response.status_code >= 300:
             retry_after = response.headers.get("retry-after", "0")
             await response.aclose()

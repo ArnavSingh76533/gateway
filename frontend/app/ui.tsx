@@ -46,7 +46,7 @@ export function ProviderIcon({
       className={`provider-icon ${small ? "small" : ""}`}
       aria-hidden="true"
     >
-      {initials[kind] || "AI"}
+      {initials[kind] || kind.slice(0, 2).toUpperCase()}
     </span>
   );
 }

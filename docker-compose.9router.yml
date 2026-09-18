@@ -1,0 +1,24 @@
+# Optional private subscription bridge. See docs/provider-hub.md before enabling.
+services:
+  gateway:
+    environment:
+      PRIVATE_UPSTREAM_HOSTS: '["9router"]'
+  9router:
+    build:
+      context: https://github.com/decolua/9router.git#17c4cc76877bd1755030a8414f8d0083f48dcccf
+    env_file: .env.9router
+    environment:
+      DATA_DIR: /app/data
+      HOSTNAME: 0.0.0.0
+      PORT: "20128"
+      NODE_ENV: production
+      REQUIRE_API_KEY: "true"
+      ENABLE_REQUEST_LOGS: "false"
+      BASE_URL: http://9router:20128
+    ports:
+      - "127.0.0.1:20128:20128"
+    volumes:
+      - private_9router_data:/app/data
+    restart: unless-stopped
+volumes:
+  private_9router_data:

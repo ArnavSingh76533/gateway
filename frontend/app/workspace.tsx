@@ -2,6 +2,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   Activity,
+  Gauge,
   ArrowDownToLine,
   ArrowRight,
   BookOpen,
@@ -60,6 +61,9 @@ import {
   demoKeys,
 } from "@/lib/demo";
 import { AuthForm, ProviderForm, ModelForm } from "./forms";
+import Landing from "./landing";
+import ProviderDirectory from "./provider-directory";
+import QuotaPanel from "./quota-panel";
 import Playground from "./playground";
 import AdminPanel from "./admin-panel";
 import Documentation from "./documentation";
@@ -82,6 +86,8 @@ import {
 } from "./ui";
 
 type View =
+  | "home"
+  | "quotas"
   | "overview"
   | "providers"
   | "models"
@@ -99,6 +105,7 @@ const nav: { id: View; name: string; icon: typeof Activity }[] = [
   { id: "keys", name: "API keys", icon: KeyRound },
   { id: "requests", name: "Request logs", icon: Activity },
   { id: "usage", name: "Usage & analytics", icon: ChartNoAxesCombined },
+  { id: "quotas", name: "Tokens & limits", icon: Gauge },
   { id: "docs", name: "Documentation", icon: BookOpen },
   { id: "admin", name: "Administration", icon: ShieldCheck },
 ];
@@ -126,7 +133,7 @@ export default function Dashboard() {
   const [requestLogs, setRequestLogs] = useState<Log[]>([]);
   const [requestTotal, setRequestTotal] = useState(0);
   const [freeOnly, setFreeOnly] = useState(false);
-  const [view, setView] = useState<View>("overview"),
+  const [view, setView] = useState<View>("home"),
     [user, setUser] = useState<User | null>(null),
     [demo, setDemo] = useState(true),
     [ready, setReady] = useState(false),
@@ -142,6 +149,7 @@ export default function Dashboard() {
     [busy, setBusy] = useState(false),
     [toast, setToast] = useState(""),
     [connectionError, setConnectionError] = useState("");
+  const [newProviderKind, setNewProviderKind] = useState("openrouter");
   const [authOpen, setAuthOpen] = useState(false),
     [providerModal, setProviderModal] = useState<Provider | "new" | null>(null),
     [modelModal, setModelModal] = useState<Model | "new" | null>(null),
@@ -183,12 +191,32 @@ export default function Dashboard() {
     setEndpoint(window.location.origin + "/v1");
     const syncHash = () => {
       const hash = window.location.hash.slice(1) as View;
-      if (nav.some((n) => n.id === hash)) {
-        setView(hash);
+      if (!hash || hash === "home" || nav.some((n) => n.id === hash)) {
+        setView(hash || "home");
         setMobile(false);
       }
     };
     syncHash();
+    const outcome = new URLSearchParams(window.location.search).get(
+      "connection",
+    );
+    if (["connected", "failed", "cancelled"].includes(outcome || "")) {
+      notify(
+        outcome === "connected"
+          ? "OpenRouter connected. Your models are ready to explore."
+          : outcome === "cancelled"
+            ? "Provider sign-in cancelled."
+            : "Provider sign-in could not finish. Please try connecting again.",
+        outcome === "failed" ? "error" : "info",
+      );
+      const cleaned = new URL(window.location.href);
+      cleaned.searchParams.delete("connection");
+      window.history.replaceState(
+        null,
+        "",
+        cleaned.pathname + cleaned.search + cleaned.hash,
+      );
+    }
     window.addEventListener("hashchange", syncHash);
     Promise.all([
       api<User>("/auth/me").catch(() => null),
@@ -203,7 +231,7 @@ export default function Dashboard() {
     return () => window.removeEventListener("hashchange", syncHash);
   }, []);
   useEffect(() => {
-    document.title = `${nav.find((n) => n.id === view)?.name || "Overview"} · ${site.site_name} AI Gateway`;
+    document.title = `${nav.find((n) => n.id === view)?.name || "Welcome"} · ${site.site_name} AI Gateway`;
   }, [view, site.site_name]);
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -444,12 +472,25 @@ export default function Dashboard() {
       />
     </div>
   );
-  if (!ready)
+  if (view === "home")
     return (
-      <main className="initial-loading" aria-busy="true">
-        <h1>Loading your workspace…</h1>
-        <Skeleton className="skeleton-chart" />
-      </main>
+      <>
+        <Landing site={site} user={user} onSignIn={() => setAuthOpen(true)} />
+        {authOpen && (
+          <AuthForm
+            site={site}
+            onClose={() => setAuthOpen(false)}
+            onSuccess={(newUser, key) => {
+              setUser(newUser);
+              setDemo(false);
+              setAuthOpen(false);
+              if (key) setSecret(key);
+              navigate("overview");
+              notify("Welcome to your workspace");
+            }}
+          />
+        )}
+      </>
     );
   return (
     <div className="app-shell" data-accent={site.accent}>
@@ -478,11 +519,7 @@ export default function Dashboard() {
         >
           <X size={20} />
         </button>
-        <a
-          href="#overview"
-          className="brand"
-          onClick={() => navigate("overview")}
-        >
+        <a href="#home" className="brand" onClick={() => navigate("home")}>
           <span className="brand-mark">
             {site.site_name.slice(0, 1).toUpperCase()}
           </span>
@@ -506,7 +543,7 @@ export default function Dashboard() {
         </div>
         <span className="nav-caption">WORKSPACE</span>
         <nav aria-label="Main navigation">
-          {nav.slice(0, 7).map((n) => (
+          {nav.slice(0, 8).map((n) => (
             <a
               key={n.id}
               href={`#${n.id}`}
@@ -667,7 +704,10 @@ export default function Dashboard() {
                   <button
                     className="button primary"
                     onClick={() =>
-                      requireAccount(() => setProviderModal("new"))
+                      requireAccount(() => {
+                        setNewProviderKind("openrouter");
+                        setProviderModal("new");
+                      })
                     }
                   >
                     <Plus size={17} />
@@ -890,7 +930,10 @@ export default function Dashboard() {
                   <button
                     className="button primary"
                     onClick={() =>
-                      requireAccount(() => setProviderModal("new"))
+                      requireAccount(() => {
+                        setNewProviderKind("openrouter");
+                        setProviderModal("new");
+                      })
                     }
                   >
                     <Plus size={17} />
@@ -905,6 +948,23 @@ export default function Dashboard() {
                   credentials are never displayed.
                 </span>
                 <Badge>{p.filter((x) => x.enabled).length} enabled</Badge>
+              </div>
+              <ProviderDirectory
+                onConnect={(kind) =>
+                  requireAccount(() => {
+                    setNewProviderKind(kind);
+                    setProviderModal("new");
+                  })
+                }
+              />
+              <div className="connections-heading">
+                <h2>Connected accounts</h2>
+                <button
+                  className="text-button"
+                  onClick={() => navigate("quotas")}
+                >
+                  Tokens & limits <ArrowRight size={15} />
+                </button>
               </div>
               <div className="provider-card-grid">
                 {p.map((provider) => (
@@ -1035,7 +1095,12 @@ export default function Dashboard() {
                 ))}
                 <button
                   className="add-provider-card"
-                  onClick={() => requireAccount(() => setProviderModal("new"))}
+                  onClick={() =>
+                    requireAccount(() => {
+                      setNewProviderKind("openrouter");
+                      setProviderModal("new");
+                    })
+                  }
                 >
                   <span className="add-circle">
                     <Plus size={25} />
@@ -1047,8 +1112,7 @@ export default function Dashboard() {
                     Same simple connection.
                   </p>
                   <div className="provider-symbols">
-                    {Object.keys(providerInfo)
-                      .slice(0, 5)
+                    {["openrouter", "groq", "google", "anthropic", "nvidia"]
                       .map((kind) => (
                         <ProviderIcon key={kind} kind={kind} small />
                       ))}
@@ -1530,6 +1594,13 @@ export default function Dashboard() {
               </section>
             </>
           )}
+          {view === "quotas" && (
+            <QuotaPanel
+              key={user?.id || "demo"}
+              demo={demo}
+              onSignIn={() => setAuthOpen(true)}
+            />
+          )}
           {view === "usage" && (
             <>
               <PageHeading
@@ -1698,6 +1769,7 @@ export default function Dashboard() {
       )}
       {providerModal && (
         <ProviderForm
+          initialKind={newProviderKind}
           provider={providerModal === "new" ? undefined : providerModal}
           onClose={() => setProviderModal(null)}
           onSaved={connected}
