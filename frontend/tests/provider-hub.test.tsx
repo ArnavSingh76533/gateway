@@ -29,7 +29,7 @@ it("shows the landing page immediately while account loading is pending", async 
   ).toEqual([]);
 });
 
-it("searches the complete provider directory and routes subscription choices to 9router", async () => {
+it("searches providers and connects native subscriptions directly", async () => {
   const onConnect = vi.fn();
   render(<ProviderDirectory onConnect={onConnect} />);
   const user = userEvent.setup();
@@ -40,19 +40,19 @@ it("searches the complete provider directory and routes subscription choices to 
   await user.click(screen.getByRole("button", { name: /DeepSeek/ }));
   expect(onConnect).toHaveBeenLastCalledWith("deepseek");
   await user.clear(search);
+  await user.type(search, "kimi");
+  await user.click(
+    screen.getByRole("button", { name: /Kimi.*native sign-in/i }),
+  );
+  expect(onConnect).toHaveBeenLastCalledWith("kimi");
+  await user.clear(search);
   await user.selectOptions(
     screen.getByLabelText("Connection method"),
-    "bridge",
+    "unavailable",
   );
-  expect(
-    screen.queryByRole("button", { name: /DeepSeek/ }),
-  ).not.toBeInTheDocument();
-  const choices = screen.getAllByRole("button", {
-    name: /Via private 9router/,
-  });
-  expect(choices.length).toBeGreaterThan(30);
-  await user.click(choices[0]);
-  expect(onConnect).toHaveBeenLastCalledWith("9router");
+  const choices = screen.getAllByRole("button", { name: /Not yet supported/ });
+  expect(choices.length).toBeGreaterThan(20);
+  expect(choices.every((button) => button.hasAttribute("disabled"))).toBe(true);
 });
 
 it("offers OpenRouter OAuth without requiring an API key and reports failed initiation", async () => {
@@ -81,15 +81,22 @@ it("offers OpenRouter OAuth without requiring an API key and reports failed init
     "/api/oauth/openrouter/start",
     expect.objectContaining({
       method: "POST",
-      body: JSON.stringify({ name: "OpenRouter" }),
+      body: JSON.stringify({
+        name: "OpenRouter",
+        priority: 10,
+        preferred_models: [],
+        preferred_only: false,
+      }),
     }),
   );
 });
 
-it("connects a private 9router endpoint using its gateway key", async () => {
+it("preserves legacy compatible connections without requiring a bridge", async () => {
   const fetcher = vi
     .fn()
-    .mockResolvedValue(new Response(JSON.stringify({ id: "bridge" })));
+    .mockResolvedValue(
+      new Response(JSON.stringify({ id: "bridge", data: [], total: 0 })),
+    );
   vi.stubGlobal("fetch", fetcher);
   const saved = vi.fn();
   render(
@@ -98,12 +105,18 @@ it("connects a private 9router endpoint using its gateway key", async () => {
   fireEvent.change(screen.getByLabelText("Base URL"), {
     target: { value: "https://bridge.example/v1" },
   });
-  fireEvent.change(screen.getByLabelText("9router gateway API key"), {
+  fireEvent.change(screen.getByLabelText("Provider API key"), {
     target: { value: "test-bridge-key" },
   });
   await userEvent
     .setup()
     .click(screen.getByRole("button", { name: "Connect provider" }));
+  await screen.findByRole("heading", {
+    name: "Connected · choose your models",
+  });
+  await userEvent
+    .setup()
+    .click(screen.getByRole("button", { name: "Skip for now" }));
   await waitFor(() => expect(saved).toHaveBeenCalled());
   expect(JSON.parse(fetcher.mock.calls[0][1].body)).toMatchObject({
     kind: "9router",
@@ -112,7 +125,7 @@ it("connects a private 9router endpoint using its gateway key", async () => {
   });
 });
 
-it("clears credentials when switching providers and offers the subscription bridge", async () => {
+it("clears credentials when switching providers and offers native sign-in", async () => {
   render(<ProviderForm onClose={vi.fn()} onSaved={vi.fn()} />);
   const user = userEvent.setup();
   fireEvent.change(screen.getByLabelText("Provider API key"), {
@@ -125,13 +138,13 @@ it("clears credentials when switching providers and offers the subscription brid
   await user.selectOptions(screen.getByLabelText("Provider"), "xai");
   expect(screen.getByLabelText("Provider API key")).toHaveValue("");
   expect(screen.getByLabelText("Headers as JSON")).toHaveValue("");
-  await user.click(
-    screen.getByRole("button", {
-      name: "Connect subscription via private 9router",
-    }),
-  );
-  expect(screen.getByLabelText("Provider")).toHaveValue("9router");
-  expect(screen.getByLabelText("9router gateway API key")).toHaveValue("");
+  await user.selectOptions(screen.getByLabelText("Provider"), "kimi");
+  expect(screen.getByLabelText("Provider API key")).toHaveValue("");
+  await user.click(screen.getByRole("button", { name: "Sign in with Kimi" }));
+  expect(screen.queryByLabelText("Provider API key")).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Start secure sign-in" }),
+  ).toBeInTheDocument();
 });
 
 it("distinguishes expired token windows, unknown values, and credit balances", async () => {

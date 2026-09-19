@@ -99,7 +99,11 @@ describe("Authentication", () => {
 
 describe("Provider and model forms", () => {
   it("saves custom endpoints and preserves priority zero", async () => {
-    const fetcher = vi.fn().mockResolvedValue(result({}));
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(
+        result({ id: "custom-connection", data: [], total: 0 }),
+      );
     vi.stubGlobal("fetch", fetcher);
     const props = callbacks();
     render(<ProviderForm {...props} />);
@@ -117,7 +121,11 @@ describe("Provider and model forms", () => {
       target: { value: '{"X-Organization":"test-org"}' },
     });
     await user.click(screen.getByRole("button", { name: "Connect provider" }));
-    await waitFor(() => expect(props.onSaved).toHaveBeenCalled());
+    await screen.findByRole("heading", {
+      name: "Connected · choose your models",
+    });
+    await user.click(screen.getByRole("button", { name: "Skip for now" }));
+    expect(props.onSaved).toHaveBeenCalled();
     expect(JSON.parse(fetcher.mock.calls[0][1].body)).toMatchObject({
       kind: "custom",
       priority: 0,

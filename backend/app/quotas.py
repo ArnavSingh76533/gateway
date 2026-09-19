@@ -114,6 +114,7 @@ async def capture(state: Any, pid: str, model: str | None, headers: httpx.Header
 async def snapshot(state: Any, provider: Provider) -> dict[str, Any]:
     saved = json.loads(await state.shared.get("quota:" + provider.id) or "{}")
     balance = json.loads(await state.shared.get("balance:" + provider.id) or "{}")
+    account = json.loads(await state.shared.get("account-quota:" + provider.id) or "{}")
     health = await state.shared.health(provider.id)
     return {
         "provider_id": provider.id,
@@ -121,12 +122,14 @@ async def snapshot(state: Any, provider: Provider) -> dict[str, Any]:
         "kind": provider.kind,
         "enabled": provider.enabled,
         "model": saved.get("model"),
-        "windows": saved.get("windows", []) + balance.pop("windows", []),
+        "windows": saved.get("windows", [])
+        + balance.pop("windows", [])
+        + account.get("windows", []),
         "balance": balance or None,
         "observed_at": saved.get("observed_at"),
         "retry_at": health.get("retry_at"),
         "status": health.get("status", "unknown"),
-        "can_refresh": provider.kind in {"openrouter", "deepseek"},
+        "can_refresh": provider.kind in {"openrouter", "deepseek", "codex", "github", "kimi"},
     }
 
 
@@ -174,6 +177,35 @@ async def refresh_balance(pid: str, request: Request, db: DB, user: CurrentUser)
     from .discovery import adapter_for
 
     p = await owned_provider(db, user.id, pid)
+    from .providers.catalog import DIRECT
+    from .subscription_quotas import KINDS, fetch
+
+    if p.kind in KINDS:
+        if p.base_url.rstrip("/") != DIRECT[p.kind]["url"].rstrip("/"):
+            raise fail(400, "Account quotas require the official provider endpoint.")
+        if not await request.app.state.shared.put("balance-refresh:" + p.id, "1", 30, nx=True):
+            raise fail(429, "Please wait 30 seconds before checking this account again.")
+        try:
+            async with asyncio.timeout(45):
+                windows = await fetch(request.app.state, p)
+            await request.app.state.shared.put(
+                "account-quota:" + p.id, json.dumps({"windows": windows}), 86400
+            )
+        except (
+            httpx.HTTPError,
+            UpstreamError,
+            TimeoutError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            KeyError,
+        ):
+            raise fail(
+                502,
+                "The provider did not report account limits. Check account access or try again later.",
+                "quota_unavailable",
+            ) from None
+        return await snapshot(request.app.state, p)
     if p.kind not in {"openrouter", "deepseek"}:
         raise fail(
             400,

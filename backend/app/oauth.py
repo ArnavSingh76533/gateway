@@ -1,4 +1,4 @@
-"""Account-bound OpenRouter PKCE. Other subscription OAuth stays in a private 9router."""
+"""Account-bound OpenRouter PKCE. Device sign-ins live in native_auth."""
 
 import asyncio
 import base64
@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 import httpx
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel, Field
+from pydantic import Field
 from sqlalchemy import func, select
 
 from .auth import DB, CurrentUser
@@ -18,18 +18,21 @@ from .dashboard import create_provider
 from .errors import UpstreamError, fail
 from .models import Provider
 from .providers.base import OpenAIAdapter
-from .schemas import ProviderInput
+from .schemas import ModelPreferences, ProviderInput
 from .security import token_hash
 
 router = APIRouter(prefix="/api/oauth/openrouter", tags=["Provider OAuth"])
 
 
-class OAuthStart(BaseModel):
+class OAuthStart(ModelPreferences):
+    priority: int = Field(default=10, ge=0, le=1000)
     name: str = Field(default="OpenRouter", min_length=1, max_length=80)
 
 
 @router.post("/start")
 async def start(body: OAuthStart, request: Request, db: DB, user: CurrentUser) -> dict:
+    if body.preferred_only and not body.preferred_models:
+        raise fail(422, "Choose at least one preferred model.")
     await request.app.state.shared.rate_limit("oauth-start:" + user.id, 5)
     if await db.scalar(
         select(Provider.id).where(Provider.user_id == user.id, Provider.name == body.name)
@@ -55,6 +58,9 @@ async def start(body: OAuthStart, request: Request, db: DB, user: CurrentUser) -
         "session": token_hash(request.cookies.get("gw_session", "")),
         "verifier": verifier,
         "name": body.name,
+        "priority": body.priority,
+        "preferred_models": body.preferred_models,
+        "preferred_only": body.preferred_only,
     }
     await request.app.state.shared.put(
         "oauth:" + token_hash(state), request.app.state.vault.seal(record), 600
@@ -132,7 +138,14 @@ async def callback(
             await response.aclose()
     try:
         await create_provider(
-            ProviderInput(kind="openrouter", name=record["name"], api_key=api_key),
+            ProviderInput(
+                kind="openrouter",
+                name=record["name"],
+                api_key=api_key,
+                priority=record.get("priority", 10),
+                preferred_models=record.get("preferred_models", []),
+                preferred_only=record.get("preferred_only", False),
+            ),
             request,
             db,
             user,

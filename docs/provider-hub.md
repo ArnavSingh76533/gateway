@@ -1,53 +1,62 @@
-# Provider hub, subscription connections, and quotas
+# Native connections, model preferences, and quotas
 
-The landing page is available immediately at `/` or `/#home`. The workspace is at `/#overview`, provider search at `/#providers`, and limits at `/#quotas`. Administration stays at `/#admin` and requires a server-granted administrator role.
+The gateway runs provider linking, encrypted credential storage, refresh-token renewal, catalog discovery, and inference itself. No 9router process, private bridge, or separate dashboard is required. The existing landing design is retained.
 
 ## Connection methods
 
-The directory contains 121 entries adapted from the 9router registry: 57 direct connection types (including custom endpoints and the 9router bridge), and 64 entries reached through a private 9router. The catalog includes media and specialist services as well as language models. Provider entries are configuration options, not a claim that every service or subscription was tested with a live credential.
+| Provider | Native linking | Inference | Account limits |
+| --- | --- | --- | --- |
+| OpenRouter | Browser redirect with PKCE | Existing direct adapter | Credit and reported free-request allowance |
+| Kimi Code | Device authorization or coding API key | OpenAI-compatible chat | Plan/rate allowances in provider units |
+| Kilo Code | Device authorization or API key | Kilo gateway chat and live catalog/prices | Reported response headers |
+| GitHub Copilot | Device authorization; requires Copilot access | Chat; Anthropic Messages for Claude; Responses for Codex models | Reported quota snapshots |
+| OpenAI Codex | Device authorization; enable device login in ChatGPT security/workspace settings | Stateless Responses, translated chat, streaming and client function calls | Reported session/account windows as percentages |
+| Grok Build | Device authorization; requires account access | Stateless Responses and translated chat | Reported response headers |
+| Other direct connectors | Provider API key | Supported native/OpenAI-compatible protocol | Reported response headers; DeepSeek credit endpoint |
 
-1. **API key:** Search Providers, choose a direct connection, and enter the provider's key. The displayed base URL comes from the directory and can be changed before saving. Azure requires the resource's `/openai/v1` URL; Cloudflare requires the account-specific OpenAI-compatible URL. A provider without a model-list endpoint can still be used by adding its exact model ID and capabilities in Model explorer. Native Anthropic-compatible connections translate ordinary OpenAI chat, images, client tools, and SSE streams to Messages; unsupported parameters return an error instead of being silently applied.
-2. **OpenRouter sign-in:** Choose OpenRouter → Sign in with OpenRouter → Continue. Authorization uses PKCE S256, a ten-minute single-use state, and the same signed-in gateway session. The returned provider key is encrypted using the existing vault. No OpenRouter client secret or new application registration is required. Configure the actual HTTPS site origin in `ALLOWED_ORIGINS`; keep secure cookies enabled in production. OpenRouter authorization is separate from signing in to this gateway.
-3. **Private 9router:** Authorize subscription accounts in your own 9router dashboard. In this gateway choose Private 9router and save its `/v1` base URL plus a generated 9router gateway key. Subscription passwords, cookies, and refresh tokens stay in that instance. The gateway stores only the bridge key and URL, scoped to the owning gateway account. Each user can connect their own instance. Do not publish subscription routes as community models unless you intentionally want to sponsor other users' requests.
+The directory offers 61 native connection types. Other reference entries are marked **Not yet supported**, including desktop-specific, cookie-based, media, and specialist protocols without a native adapter. This release does not claim complete parity with every 9router executor. Use Anthropic API keys for Claude and Google AI Studio API keys for Gemini; Claude subscription login, Gemini CLI/Antigravity, Cursor, Kiro, and other unimplemented logins are unavailable. Custom OpenAI-compatible API endpoints remain supported. Existing legacy bridge connections still work for backward compatibility, but new flows never require or redirect to one.
 
-### Run a private 9router beside a self-hosted gateway
+The five new device authorization endpoints were reached successfully during development. Automated tests cover successful authorization exchanges and inference against controlled upstream responses; live authenticated inference on every subscription was not tested. Provider access, protocol availability, and client authorization rules remain controlled by the provider. These adapters use the referenced public client protocols; directory presence is not provider endorsement.
 
-The optional Compose overlay builds the upstream source at the reviewed commit and uses a separate persistent volume. It is not enabled by the default deployment and does not run on Hugging Face automatically.
+## Connect an account
 
-```sh
-python scripts/setup.py       # only for a fresh gateway; existing .env stays unchanged
-python scripts/setup_9router.py
-docker compose -f docker-compose.yml -f docker-compose.9router.yml up --build -d
-```
+1. Open **Providers**, find the service, and choose API key or **Sign in with …**.
+2. For device sign-in, open the provider's authorization page, sign in there, and approve the displayed one-time code. The gateway polls at the provider's required interval. Your provider password never passes through this app.
+3. After connection, search the full discovered catalog and choose model preferences. The search is server-side, includes every page, and has a free-model filter.
+4. Complete the preferences step, or skip it and edit the connection later.
 
-Open `http://localhost:20128` and sign in using `INITIAL_PASSWORD` from the private `.env.9router` file. Complete provider logins there and create a 9router API key. In the gateway provider form use `http://9router:20128/v1` and that API key. The dashboard port is bound to loopback; API-key enforcement is enabled. Back up both database volumes and their secret files. On a remote host, access the dashboard through an SSH tunnel or a private authenticated network.
+OpenRouter returns to this site after its browser flow. Its preferences entered before sign-in are retained; edit the connection afterward to use full-catalog search. To change an OAuth account, add a new connection and remove the old connection when ready. Each gateway account has its own credentials. Native authorization flows are bound to both the gateway user and browser session, expire, support cancellation, enforce polling intervals, and never return access/refresh tokens to the UI.
 
-The overlay sets `PRIVATE_UPSTREAM_HOSTS=["9router"]`. Preserve any other intentionally configured hosts when adapting it. An allowlisted host is reachable by gateway users, so always require a bridge API key. Do not allowlist arbitrary networks or metadata endpoints. Configure OAuth callback reachability according to each provider's instructions in the private dashboard.
+Refresh tokens are encrypted with the server's existing Fernet vault. Renewal uses a shared lease and reloads the latest saved credentials, so replicas cannot concurrently rotate the same refresh token. GitHub access tokens are exchanged for short-lived Copilot inference tokens. Failed refreshes require reconnecting; they never fall back to another user's credentials. Keep PostgreSQL, Redis, and `ENCRYPTION_KEYS` persistent.
 
-### Connecting from the Hugging Face site
+## Model preferences and exact routes
 
-`localhost` on a Hugging Face Space means the Space container, not your computer. A separately hosted bridge must be reachable from the Space at an HTTPS URL on a supported outbound port. Keep its dashboard private and expose only authenticated inference/model-list routes through your reverse proxy. Supply the bridge URL and key in the provider form. Hosting and provider authorization are required before subscription calls can work; adding a directory card alone does not authorize an account.
+Each connection saves an ordered `preferred_models` list and an optional `preferred_only` flag. For example, choose a fast model as 1, a reasoning model as 2, and a free fallback as 3.
 
-The bridge discovers chat, image, embedding, speech and transcription catalogs. Gateway routes remain `/v1/chat/completions`, `/v1/responses`, `/v1/embeddings`, `/v1/images/generations`, `/v1/audio/speech`, and `/v1/audio/transcriptions`, plus the existing `/v1/messages` compatibility bridge. Actual support depends on the model and upstream. 9router-specific video, web search/fetch, local desktop/MITM and management APIs are not proxied by this gateway; use the private dashboard/API for those services.
+- **Auto:** pinned connections and connection priority are considered first, then the model order within that priority. Unranked eligible models follow unless **Only use these models** is enabled.
+- **Fastest/cheapest:** retain their explicit optimization target, with preferences used after equal connection priority and equal speed/price. Coding mode first applies its existing coding hint.
+- **Exact model:** an explicit `connection-id::model-id` continues to select that model even when it is outside the automatic preference list. A plain ID can use eligible connections with the same ID. `allow_alternatives=true` allows compatible alternatives after exact matches, subject to preferences.
+- Unavailable, undiscovered, incompatible, or cooling-down models are skipped. A manually typed preference does not register a model or grant access. Add manual model metadata separately if discovery is unavailable.
+- Fallback stays within the request's retry budget. A provider-wide authentication, rate-limit, or outage cooldown skips that provider; model-specific failures can try the next eligible model. Streaming never retries after committing output.
 
-## Same model, different providers
+The full playground and model explorer catalog remain searchable. Identical display names on Groq, OpenRouter, or NVIDIA do not make their upstream model IDs interchangeable. Use the copied connection-specific route for precise control.
 
-Model explorer and the playground preserve every connected provider's model ID. Copy the exact `connection-id::model-id` route to choose a specific account. For 9router, provider prefixes remain intact: `connection-id::provider/model-id`. A plain model ID can route among eligible matching providers, while `auto` uses confirmed capabilities and the configured priority/fallback policy. Connecting Groq and OpenRouter does not mean their model IDs are interchangeable.
+## Protocol boundaries
 
-## Tokens, credit balances, and reset times
+Native subscription chat adapters support ordinary text, images when the provider confirms support, and client function calls. Codex and Grok Build use stateless Responses (`store=false`), so send conversation history instead of `previous_response_id`. Codex does not accept all Chat Completions controls; unsupported sampling/token-limit controls produce an error rather than being silently ignored. Use an ordinary OpenAI API-key connection when those controls are required. Native adapters discover live provider catalogs rather than inventing access from a static model list. Account plans can deny individual models.
 
-- OpenAI-style and Groq `x-ratelimit-*` response headers and Anthropic `anthropic-ratelimit-*` headers are recorded on successful and error responses. Counts apply to the reported window/model/account, not necessarily every model under a provider. A snapshot shows the last model and observation time.
-- OpenRouter's Check credit balance action reads `/api/v1/key`: its key spending cap is shown in USD, separate from any reported free-model daily request counter. If the daily counter is returned, its reset is the next UTC day per OpenRouter's documented policy. A missing spending limit is not described as unlimited funds.
-- DeepSeek's balance action reads `/user/balance` and keeps USD/CNY credit balances separate from token counts.
-- Refreshing the page retrieves saved observations; it does not generate a paid inference request. Balance API checks are limited to one per connection per 30 seconds. Subscription-specific quota APIs stay in the private 9router dashboard. A bridge only exposes forwarded quota headers here when it supplies them.
-- A passed reset time displays “Awaiting update”; the UI never fabricates a replenished balance. Unknown data remains unknown. Header snapshots expire after 48 hours and balance snapshots after 24 hours; Redis provides shared storage in production. Gateway usage covers the last 24 hours and only requests recorded here, with missing token counts explicitly described as incomplete.
+The existing `/v1/messages` compatibility layer and native Anthropic API-key adapter retain their documented limits. Desktop session emulation, provider website cookies, video/search specialist APIs, and arbitrary management APIs are not exposed.
 
-## Validation and sources
+## Quotas
 
-Automated tests cover adapter translation and streaming, bridge model namespaces, OAuth ownership/session checks and replay, credential encryption, quota parsing and account isolation, provider search, landing accessibility, and stale-limit presentation. Live credentials are still needed to validate a particular provider/account's availability.
+**Tokens & limits** combines observed response headers with optional read-only account quota checks. Limits can describe tokens, requests, percentages, or provider units; they are labeled as reported and are not interchangeable. Codex account percentages are not absolute token balances. Monetary balances remain separate.
 
-- [9router source and license](https://github.com/decolua/9router), pinned attribution in `third-party/9router-source.md`.
-- [OpenRouter OAuth](https://openrouter.ai/docs/guides/overview/auth/oauth) and [limits](https://openrouter.ai/docs/api_reference/limits).
-- [Groq rate limits](https://console.groq.com/docs/rate-limits).
-- [DeepSeek balance endpoint](https://api-docs.deepseek.com/api/get-user-balance/).
-- [Anthropic streaming](https://platform.claude.com/docs/en/build-with-claude/streaming).
+OpenRouter/DeepSeek have credit checks. Codex, Copilot, and Kimi have **Check account limits**, subject to account access. Checks are rate-limited and do not generate inference. Missing fields remain unknown; zero and unlimited are not inferred. Expired observations show **Awaiting update** until a fresh provider response arrives. Other provider account APIs are not yet implemented, so the app can show only the rate headers they send.
+
+## Source references
+
+- [9router source](https://github.com/decolua/9router), pinned provenance and MIT notice in [third-party/9router-source.md](third-party/9router-source.md).
+- [Codex authentication](https://developers.openai.com/codex/auth) and its upstream device-code protocol.
+- [Kimi device authorization implementation](https://github.com/MoonshotAI/kimi-cli/blob/main/src/kimi_cli/auth/oauth.py).
+- [Kilo authentication](https://github.com/Kilo-Org/kilocode/blob/main/packages/kilo-docs/pages/gateway/authentication.md).
+- [OpenRouter OAuth](https://openrouter.ai/docs/guides/overview/auth/oauth).

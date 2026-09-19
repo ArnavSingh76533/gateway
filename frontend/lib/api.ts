@@ -19,6 +19,9 @@ export type Provider = {
   enabled: boolean;
   priority: number;
   pinned: boolean;
+  preferred_models?: string[];
+  preferred_only?: boolean;
+  auth_type?: "api_key" | "oauth";
   models_count: number;
   discovered_at: number | null;
   discovery_error: string | null;

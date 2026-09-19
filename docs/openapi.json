@@ -1232,6 +1232,210 @@
         ]
       }
     },
+    "/api/oauth/{kind}/start": {
+      "post": {
+        "tags": [
+          "Provider OAuth"
+        ],
+        "summary": "Start",
+        "operationId": "start_api_oauth__kind__start_post",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value of the gw_csrf cookie. Same-origin dashboard mutations only."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Start"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Start Api Oauth  Kind  Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
+    "/api/oauth/{kind}/poll": {
+      "post": {
+        "tags": [
+          "Provider OAuth"
+        ],
+        "summary": "Poll",
+        "operationId": "poll_api_oauth__kind__poll_post",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value of the gw_csrf cookie. Same-origin dashboard mutations only."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Flow"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Poll Api Oauth  Kind  Poll Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
+    "/api/oauth/{kind}/cancel": {
+      "post": {
+        "tags": [
+          "Provider OAuth"
+        ],
+        "summary": "Cancel",
+        "operationId": "cancel_api_oauth__kind__cancel_post",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value of the gw_csrf cookie. Same-origin dashboard mutations only."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Flow"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel Api Oauth  Kind  Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DashboardSession": []
+          }
+        ]
+      }
+    },
     "/api/site": {
       "get": {
         "tags": [
@@ -2502,6 +2706,22 @@
         ],
         "title": "EmbeddingRequest"
       },
+      "Flow": {
+        "properties": {
+          "flow_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 32,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Flow Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "flow_id"
+        ],
+        "title": "Flow"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2814,6 +3034,26 @@
       },
       "OAuthStart": {
         "properties": {
+          "preferred_models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Preferred Models"
+          },
+          "preferred_only": {
+            "type": "boolean",
+            "title": "Preferred Only",
+            "default": false
+          },
+          "priority": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Priority",
+            "default": 10
+          },
           "name": {
             "type": "string",
             "maxLength": 80,
@@ -2827,6 +3067,19 @@
       },
       "ProviderInput": {
         "properties": {
+          "preferred_models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Preferred Models"
+          },
+          "preferred_only": {
+            "type": "boolean",
+            "title": "Preferred Only",
+            "default": false
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -2846,19 +3099,24 @@
               "cerebras",
               "chutes",
               "cloudflare-ai",
+              "codex",
               "cohere",
               "custom",
               "deepseek",
               "featherless",
               "fireworks",
+              "github",
               "glm",
               "glm-cn",
               "google",
+              "grok-cli",
               "groq",
               "huggingface",
               "hyperbolic",
               "jina-ai",
               "kilo-gateway",
+              "kilocode",
+              "kimi",
               "llm7",
               "minimax",
               "minimax-cn",
@@ -2951,6 +3209,32 @@
       },
       "ProviderPatch": {
         "properties": {
+          "preferred_models": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Models"
+          },
+          "preferred_only": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Only"
+          },
           "name": {
             "anyOf": [
               {
@@ -3336,6 +3620,41 @@
           "voice"
         ],
         "title": "SpeechRequest"
+      },
+      "Start": {
+        "properties": {
+          "preferred_models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Preferred Models"
+          },
+          "preferred_only": {
+            "type": "boolean",
+            "title": "Preferred Only",
+            "default": false
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "priority": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Priority",
+            "default": 10
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "Start"
       },
       "ValidationError": {
         "properties": {

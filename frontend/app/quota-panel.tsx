@@ -273,15 +273,10 @@ export default function QuotaPanel({
                   />
                   {refreshing === row.provider_id
                     ? "Checking…"
-                    : "Check credit balance"}
+                    : ["codex", "github", "kimi"].includes(row.kind)
+                      ? "Check account limits"
+                      : "Check credit balance"}
                 </button>
-              )}
-              {row.kind === "9router" && (
-                <p className="form-note">
-                  Subscription quotas are managed in your private 9router
-                  dashboard. Forwarded rate-limit headers appear here when
-                  available.
-                </p>
               )}
               <div className="quota-usage">
                 <span>Recorded here · last 24 hours</span>

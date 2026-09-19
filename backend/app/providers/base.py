@@ -102,6 +102,11 @@ class OpenAIAdapter:
         self.max_bytes = max_bytes
         self.on_headers: Callable[[httpx.Headers], Awaitable[None]] | None = None
         self.quota_model: str | None = None
+        self.credentials_loader: Callable[[], Awaitable[dict[str, Any]]] | None = None
+
+    async def prepare(self) -> None:
+        if self.credentials_loader:
+            self.credentials = await self.credentials_loader()
 
     def headers(self) -> dict[str, str]:
         headers = {"accept": "application/json"}
@@ -115,6 +120,7 @@ class OpenAIAdapter:
     ) -> httpx.Response:
         if endpoint not in self.endpoints:
             raise UpstreamError(400, "unsupported_endpoint")
+        await self.prepare()
         self.quota_model = payload.get("model")
         args: dict[str, Any] = {"data": payload, "files": files} if files else {"json": payload}
         req = self.client.build_request(
@@ -155,6 +161,7 @@ class OpenAIAdapter:
         params: dict[str, str | int] | None = None,
         headers: dict[str, str] | None = None,
     ) -> Any:
+        await self.prepare()
         req = self.client.build_request(
             "GET", url, params=params, headers=headers or self.headers()
         )

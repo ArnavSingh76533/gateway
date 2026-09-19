@@ -47,7 +47,21 @@ class ModelInput(BaseModel):
     output_price: float | None = Field(default=None, ge=0, allow_inf_nan=False)
 
 
-class ProviderInput(BaseModel):
+class ModelPreferences(BaseModel):
+    preferred_models: list[str] = Field(default_factory=list, max_length=200)
+    preferred_only: bool = False
+
+    @field_validator("preferred_models")
+    @classmethod
+    def valid_preferences(cls, value: list[str]) -> list[str]:
+        if len(value) != len(set(value)) or any(
+            not mid or len(mid) > 512 or any(c.isspace() for c in mid) for mid in value
+        ):
+            raise ValueError("Use unique model IDs, without spaces, up to 512 characters each.")
+        return value
+
+
+class ProviderInput(ModelPreferences):
     kind: ProviderKind = Field(json_schema_extra={"enum": sorted(DIRECT)})
     name: str = Field(min_length=1, max_length=80)
     api_key: str = Field(default="", max_length=8192)
@@ -61,11 +75,19 @@ class ProviderInput(BaseModel):
     @classmethod
     def known_provider(cls, value: str) -> str:
         if value not in DIRECT:
-            raise ValueError("Choose a supported provider or the private 9router connector.")
+            raise ValueError("Choose a supported provider or a custom API endpoint.")
         return value
 
 
 class ProviderPatch(BaseModel):
+    preferred_models: list[str] | None = Field(default=None, max_length=200)
+    preferred_only: bool | None = None
+
+    @field_validator("preferred_models")
+    @classmethod
+    def valid_preferences(cls, value: list[str] | None) -> list[str] | None:
+        return ModelPreferences.valid_preferences(value) if value is not None else None
+
     name: str | None = Field(default=None, min_length=1, max_length=80)
     api_key: str | None = Field(default=None, max_length=8192)
     enabled: bool | None = None
