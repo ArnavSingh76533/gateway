@@ -17,9 +17,10 @@ The public landing page opens immediately, with no blocking workspace-loading sc
 
 ## Included in v1
 
-- Searchable directory of 121 providers/services, with 57 direct connection types including OpenAI, Anthropic, DeepSeek, Groq, NVIDIA NIM, Azure, and custom endpoints. Subscription and specialist providers connect through a private 9router instance.
-- OpenRouter PKCE sign-in and a private 9router bridge that preserves provider/model namespaces.
-- Provider-reported token/request limits and reset countdowns, OpenRouter/DeepSeek credit checks, and per-connection gateway usage. Unknown quotas remain unknown. See [provider setup and limitations](docs/provider-hub.md).
+- Searchable directory with 61 native connection types, including OpenAI, Anthropic, DeepSeek, Groq, NVIDIA NIM, Azure, and custom endpoints. Unsupported desktop/specialist protocols are explicitly marked unavailable.
+- Native account linking for OpenRouter (PKCE), Kimi Code, Kilo Code, GitHub Copilot, Codex, and Grok Build (device authorization), with encrypted token storage and serialized renewal. No external 9router service is required.
+- Per-connection ranked model preferences with full-catalog search, free-model filtering, and optional restrictions on automatic routing.
+- Provider-reported token/request limits and reset countdowns, OpenRouter/DeepSeek credit checks, Codex/Copilot/Kimi account quotas, and per-connection gateway usage. Unknown quotas remain unknown. See [provider setup and limitations](docs/provider-hub.md).
 - Account registration/login/logout, Argon2id passwords, revocable database sessions, and one-time Gateway API keys with optional expiry.
 - Authenticated encryption for both provider keys and custom headers; only hashes of Gateway keys and session tokens are stored.
 - Provider discovery, persistent per-account model registry, manual model metadata, pinned providers, favorite models, and model search.

@@ -17,7 +17,7 @@ from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from . import admin, anthropic, auth, dashboard, oauth, quotas
+from . import admin, anthropic, auth, dashboard, native_auth, oauth, quotas
 from .auth import CurrentUser, GatewayPrincipal, Principal
 from .config import Settings
 from .db import Base, create_database
@@ -220,6 +220,7 @@ def create_app(
     app.include_router(dashboard.router)
     app.include_router(quotas.router)
     app.include_router(oauth.router)
+    app.include_router(native_auth.router)
     app.include_router(admin.router)
     app.include_router(anthropic.router)
 

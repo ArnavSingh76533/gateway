@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { api, User, Provider, Model, providerInfo } from "@/lib/api";
 import { Banner, CheckRow, Modal } from "./ui";
+import ModelPreferences from "./model-preferences";
+import NativeLogin, { DeviceFlow } from "./native-login";
 import { defaultSite, SiteOptions } from "@/lib/site";
 
 export function AuthForm({
@@ -203,11 +205,35 @@ export function ProviderForm({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [kind, setKind] = useState(provider?.kind || initialKind),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+  const [kind, setKind] = useState(provider?.kind || initialKind);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const [headersError, setHeadersError] = useState("");
-  const [authMethod, setAuthMethod] = useState("api_key");
+  const [authMethod, setAuthMethod] = useState(
+    providerInfo[initialKind]?.auth.includes("api_key") ? "api_key" : "oauth",
+  );
+  const [flow, setFlow] = useState<DeviceFlow | null>(null);
+  const [createdId, setCreatedId] = useState<string>();
+  const [preferred, setPreferred] = useState<string[]>(
+    provider?.preferred_models || [],
+  );
+  const [preferredOnly, setPreferredOnly] = useState(
+    provider?.preferred_only || false,
+  );
+  const info = providerInfo[kind];
+  const usesOAuth =
+    !provider && authMethod === "oauth" && info.auth.includes("oauth");
+  const savedOAuth = provider?.auth_type === "oauth";
+  function changeKind(value: string) {
+    setKind(value);
+    setAuthMethod(
+      providerInfo[value].auth.includes("api_key") ? "api_key" : "oauth",
+    );
+    setPreferred([]);
+    setPreferredOnly(false);
+    setError("");
+    setHeadersError("");
+  }
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -215,15 +241,53 @@ export function ProviderForm({
     setHeadersError("");
     const f = new FormData(e.currentTarget);
     try {
-      if (!provider && kind === "openrouter" && authMethod === "oauth") {
-        const result = await api<{ authorization_url: string }>(
-          "/oauth/openrouter/start",
-          { method: "POST", body: JSON.stringify({ name: f.get("name") }) },
+      const preferences = {
+        preferred_models: preferred,
+        preferred_only: preferredOnly,
+      };
+      if (createdId) {
+        await api(`/providers/${createdId}`, {
+          method: "PATCH",
+          body: JSON.stringify(preferences),
+        });
+        onSaved();
+        return;
+      }
+      if (usesOAuth) {
+        const result = await api<DeviceFlow & { authorization_url?: string }>(
+          `/oauth/${kind}/start`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              name: f.get("name"),
+              priority: Number(f.get("priority")),
+              ...preferences,
+            }),
+          },
         );
-        const destination = new URL(result.authorization_url);
-        if (destination.origin !== "https://openrouter.ai")
-          throw new Error("Unexpected sign-in destination.");
-        window.location.assign(destination.href);
+        if (kind === "openrouter" && result.authorization_url) {
+          const destination = new URL(result.authorization_url);
+          if (destination.origin !== "https://openrouter.ai")
+            throw new Error("Unexpected sign-in destination.");
+          window.location.assign(destination.href);
+        } else {
+          const destination = new URL(result.verification_url);
+          const hosts: Record<string, string[]> = {
+            github: ["github.com"],
+            kimi: ["www.kimi.com"],
+            kilocode: ["kilo.ai", "app.kilo.ai", "api.kilo.ai", "kilocode.ai"],
+            codex: ["auth.openai.com"],
+            "grok-cli": ["auth.x.ai", "accounts.x.ai"],
+          };
+          if (
+            destination.protocol !== "https:" ||
+            !hosts[kind]?.includes(destination.hostname) ||
+            destination.username ||
+            destination.password
+          )
+            throw new Error("Unexpected sign-in destination.");
+          setFlow(result);
+        }
         return;
       }
       const raw = String(f.get("headers") || "").trim();
@@ -235,7 +299,7 @@ export function ProviderForm({
           (!headers ||
             Array.isArray(headers) ||
             typeof headers !== "object" ||
-            Object.values(headers).some((value) => typeof value !== "string"))
+            Object.values(headers).some((v) => typeof v !== "string"))
         )
           throw new Error();
       } catch {
@@ -247,6 +311,7 @@ export function ProviderForm({
       const body: Record<string, unknown> = {
         name: f.get("name"),
         priority: Number(f.get("priority")),
+        ...preferences,
       };
       if (String(f.get("api_key") || "")) body.api_key = f.get("api_key");
       if (headers) body.headers = headers;
@@ -255,207 +320,252 @@ export function ProviderForm({
         body.base_url = f.get("base_url") || null;
         body.headers = headers || {};
       }
-      await api(provider ? `/providers/${provider.id}` : "/providers", {
-        method: provider ? "PATCH" : "POST",
-        body: JSON.stringify(body),
-      });
-      onSaved();
+      const result = await api<{ id: string }>(
+        provider ? `/providers/${provider.id}` : "/providers",
+        { method: provider ? "PATCH" : "POST", body: JSON.stringify(body) },
+      );
+      if (provider) onSaved();
+      else setCreatedId(result.id);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setBusy(false);
     }
   }
+  const close = () => {
+    if (createdId) {
+      onSaved();
+      return;
+    }
+    if (flow) {
+      void api<{ status: string }>(`/oauth/${kind}/cancel`, {
+        method: "POST",
+        body: JSON.stringify({ flow_id: flow.flow_id }),
+      })
+        .then((result) =>
+          result.status === "connected" ? onSaved() : onClose(),
+        )
+        .catch(onClose);
+      return;
+    }
+    onClose();
+  };
   return (
     <Modal
-      title={provider ? "Edit provider connection" : "Connect a provider"}
-      onClose={onClose}
+      title={
+        createdId
+          ? "Connected · choose your models"
+          : provider
+            ? "Edit provider connection"
+            : "Connect a provider"
+      }
+      onClose={close}
     >
-      <form className="form modal-body" onSubmit={submit}>
-        <p className="muted">
-          Use your own provider account. Your API key and custom headers are
-          encrypted and never returned.
-        </p>
-        {!provider && (
-          <label>
-            Provider
-            <select value={kind} onChange={(e) => setKind(e.target.value)}>
-              {Object.entries(providerInfo).map(([k, p]) => (
-                <option key={k} value={k}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <label>
-          Connection name
-          <input
-            name="name"
-            key={kind}
-            defaultValue={provider?.name || providerInfo[kind].name}
-            required
-            maxLength={80}
+      {flow && !createdId ? (
+        <div className="modal-body">
+          <NativeLogin
+            kind={kind}
+            flow={flow}
+            onConnected={(id) => {
+              setCreatedId(id);
+              setFlow(null);
+            }}
+            onCancel={() => setFlow(null)}
           />
-        </label>
-        {!provider && kind === "openrouter" && (
-          <div
-            className="auth-methods"
-            role="group"
-            aria-label="Authentication method"
-          >
-            <button
-              type="button"
-              className={`button ${authMethod === "api_key" ? "primary" : ""}`}
-              aria-pressed={authMethod === "api_key"}
-              onClick={() => setAuthMethod("api_key")}
-            >
-              Use API key
+        </div>
+      ) : (
+        <form className="form modal-body" onSubmit={submit}>
+          {!createdId && (
+            <>
+              <p className="muted">
+                Connect directly to your provider. Credentials stay encrypted on
+                this server.
+              </p>
+              {!provider && (
+                <label>
+                  Provider
+                  <select
+                    value={kind}
+                    onChange={(e) => changeKind(e.target.value)}
+                  >
+                    {Object.entries(providerInfo)
+                      .filter(([id]) => id !== "9router")
+                      .map(([k, p]) => (
+                        <option key={k} value={k}>
+                          {p.name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              )}
+              <label>
+                Connection name
+                <input
+                  name="name"
+                  key={kind}
+                  defaultValue={provider?.name || info.name}
+                  required
+                  maxLength={80}
+                />
+              </label>
+              {!provider && info.auth.includes("oauth") && (
+                <div
+                  className="auth-methods"
+                  role="group"
+                  aria-label="Authentication method"
+                >
+                  {info.auth.includes("api_key") && (
+                    <button
+                      type="button"
+                      className={`button ${authMethod === "api_key" ? "primary" : ""}`}
+                      aria-pressed={authMethod === "api_key"}
+                      onClick={() => setAuthMethod("api_key")}
+                    >
+                      Use API key
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={`button ${authMethod === "oauth" ? "primary" : ""}`}
+                    aria-pressed={authMethod === "oauth"}
+                    onClick={() => setAuthMethod("oauth")}
+                  >
+                    Sign in with {info.name}
+                  </button>
+                </div>
+              )}
+              {usesOAuth ? (
+                <p className="form-note">
+                  Authorize this connection on {info.name}. You will finish
+                  linking here, with no separate gateway to install.
+                </p>
+              ) : savedOAuth ? (
+                <Banner>
+                  This account uses native sign-in. Tokens renew automatically.
+                  To use another account, add a new connection and remove the
+                  old one.
+                </Banner>
+              ) : (
+                <>
+                  {info.note && <p className="form-note">{info.note}</p>}
+                  <label>
+                    {provider
+                      ? "Replace API key (optional)"
+                      : "Provider API key"}
+                    <input
+                      type="password"
+                      name="api_key"
+                      key={kind + "-key"}
+                      placeholder={
+                        provider
+                          ? "Leave empty to keep saved key"
+                          : "Paste your provider key"
+                      }
+                      autoComplete="off"
+                      required={
+                        !provider && !["custom", "ollama-local"].includes(kind)
+                      }
+                    />
+                  </label>
+                  {!provider && (
+                    <label>
+                      Base URL
+                      <input
+                        name="base_url"
+                        type="url"
+                        key={kind + "url"}
+                        defaultValue={info.url}
+                        placeholder="https://your-endpoint.com/v1"
+                        required={!info.url}
+                      />
+                    </label>
+                  )}
+                  <details>
+                    <summary>Advanced · custom headers</summary>
+                    <label>
+                      Headers as JSON
+                      <textarea
+                        name="headers"
+                        key={kind + "-headers"}
+                        aria-invalid={!!headersError}
+                        aria-describedby={
+                          headersError ? "headers-error" : undefined
+                        }
+                        onChange={() => setHeadersError("")}
+                        rows={3}
+                        placeholder={'{"X-Organization": "your-org"}'}
+                      />
+                      {headersError && (
+                        <small className="field-error" id="headers-error">
+                          {headersError}
+                        </small>
+                      )}
+                    </label>
+                    <p className="form-note">
+                      {provider
+                        ? "Omit to keep existing headers; enter {} to clear. "
+                        : ""}
+                      Custom authorization headers override Bearer
+                      authentication.
+                    </p>
+                  </details>
+                </>
+              )}
+              <label>
+                Priority{" "}
+                <span className="muted">— lower numbers are preferred</span>
+                <input
+                  type="number"
+                  name="priority"
+                  min={0}
+                  max={1000}
+                  defaultValue={provider?.priority ?? 10}
+                  required
+                />
+              </label>
+            </>
+          )}
+          {createdId && (
+            <Banner>
+              Connection saved. Search the full catalog and add your first,
+              second, and later choices. You can also finish without
+              preferences.
+            </Banner>
+          )}
+          <ModelPreferences
+            key={kind + (createdId || provider?.id || "new")}
+            providerId={createdId || provider?.id}
+            models={preferred}
+            only={preferredOnly}
+            onChange={setPreferred}
+            onOnlyChange={setPreferredOnly}
+          />
+          {error && <Banner tone="error">{error}</Banner>}
+          <div className="form-actions">
+            <button type="button" className="button" onClick={close}>
+              {createdId ? "Skip for now" : "Cancel"}
             </button>
-            <button
-              type="button"
-              className={`button ${authMethod === "oauth" ? "primary" : ""}`}
-              aria-pressed={authMethod === "oauth"}
-              onClick={() => setAuthMethod("oauth")}
-            >
-              Sign in with OpenRouter
+            <button className="button primary" disabled={busy} aria-busy={busy}>
+              {busy ? (
+                <LoaderCircle className="spin" size={16} />
+              ) : (
+                <KeyRound size={16} />
+              )}{" "}
+              {busy
+                ? "Connecting…"
+                : createdId
+                  ? "Save model preferences"
+                  : usesOAuth
+                    ? kind === "openrouter"
+                      ? "Continue to OpenRouter"
+                      : "Start secure sign-in"
+                    : provider
+                      ? "Save connection"
+                      : "Connect provider"}
             </button>
           </div>
-        )}
-        {!provider && kind === "openrouter" && authMethod === "oauth" ? (
-          <p className="form-note">
-            Continue to OpenRouter to authorize a key. You will return to this
-            workspace; your OpenRouter password stays with OpenRouter.
-          </p>
-        ) : (
-          <>
-            {kind === "9router" && (
-              <div className="bridge-guide">
-                <strong>Connect your private 9router</strong>
-                <p>
-                  Authorize subscription accounts in your own 9router dashboard
-                  first. Enter its reachable /v1 endpoint and gateway API key
-                  below. Models keep their provider prefixes so each route stays
-                  distinct.
-                </p>
-                <a
-                  href="https://github.com/decolua/9router#readme"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  9router setup guide ↗
-                </a>
-              </div>
-            )}
-            {providerInfo[kind]?.note && (
-              <p className="form-note">{providerInfo[kind].note}</p>
-            )}
-            {!provider &&
-              providerInfo[kind]?.category === "oauth" &&
-              kind !== "openrouter" && (
-                <button
-                  type="button"
-                  className="button"
-                  onClick={() => setKind("9router")}
-                >
-                  Connect subscription via private 9router
-                </button>
-              )}
-            <label>
-              {provider
-                ? "Replace API key (optional)"
-                : kind === "9router"
-                  ? "9router gateway API key"
-                  : "Provider API key"}
-              <input
-                type="password"
-                name="api_key"
-                key={kind + "-key"}
-                placeholder={
-                  provider
-                    ? "Leave empty to keep saved key"
-                    : "Paste your provider key"
-                }
-                autoComplete="off"
-                required={
-                  !provider && !["custom", "ollama-local"].includes(kind)
-                }
-              />
-            </label>
-            {!provider && (
-              <label>
-                Base URL
-                <input
-                  name="base_url"
-                  type="url"
-                  key={kind + "url"}
-                  defaultValue={providerInfo[kind].url}
-                  placeholder="https://your-endpoint.com/v1"
-                  required={!providerInfo[kind].url}
-                />
-              </label>
-            )}
-            <label>
-              Priority{" "}
-              <span className="muted">— lower numbers are preferred</span>
-              <input
-                type="number"
-                name="priority"
-                min={0}
-                max={1000}
-                defaultValue={provider?.priority ?? 10}
-                required
-              />
-            </label>
-            <details>
-              <summary>Advanced · custom headers</summary>
-              <label>
-                Headers as JSON
-                <textarea
-                  name="headers"
-                  key={kind + "-headers"}
-                  aria-invalid={!!headersError}
-                  aria-describedby={headersError ? "headers-error" : undefined}
-                  onChange={() => setHeadersError("")}
-                  rows={3}
-                  placeholder={'{"X-Organization": "your-org"}'}
-                />
-                {headersError && (
-                  <small className="field-error" id="headers-error">
-                    {headersError}
-                  </small>
-                )}
-              </label>
-              <p className="form-note">
-                {provider
-                  ? "Omit to keep existing headers; enter {} to clear. "
-                  : " "}
-                Custom authorization headers override Bearer authentication.
-              </p>
-            </details>
-          </>
-        )}
-        {error && <Banner tone="error">{error}</Banner>}
-        <div className="form-actions">
-          <button type="button" className="button" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="button primary" disabled={busy} aria-busy={busy}>
-            {busy ? (
-              <LoaderCircle className="spin" size={16} />
-            ) : (
-              <KeyRound size={16} />
-            )}{" "}
-            {busy
-              ? "Connecting…"
-              : !provider && kind === "openrouter" && authMethod === "oauth"
-                ? "Continue to OpenRouter"
-                : provider
-                  ? "Save connection"
-                  : "Connect provider"}
-          </button>
-        </div>
-      </form>
+        </form>
+      )}
     </Modal>
   );
 }

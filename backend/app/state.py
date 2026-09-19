@@ -1,6 +1,9 @@
 import asyncio
 import json
+import secrets
 import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any, Awaitable, cast
 
 from redis.asyncio import Redis
@@ -56,6 +59,30 @@ class SharedState:
             value = await self.get(key)
             self.memory.pop(key, None)
             return value
+
+    @asynccontextmanager
+    async def lease(self, key: str) -> AsyncIterator[None]:
+        owner = secrets.token_urlsafe(24)
+        for _ in range(200):
+            if await self.put(key, owner, 120, nx=True):
+                break
+            await asyncio.sleep(0.1)
+        else:
+            raise fail(503, "Provider authorization is busy. Retry shortly.", "oauth_busy")
+        try:
+            yield
+        finally:
+            if self.redis:
+                await self.redis.eval(
+                    "if redis.call('GET',KEYS[1]) == ARGV[1] then return redis.call('DEL',KEYS[1]) end; return 0",
+                    1,
+                    key,
+                    owner,
+                )  # type: ignore[misc]
+            else:
+                async with self.lock:
+                    if await self.get(key) == owner:
+                        self.memory.pop(key, None)
 
     async def rate_limit(self, key: str, limit: int, seconds: int = 60) -> None:
         key = "rate:" + key + ":" + str(int(time.time()) // seconds)

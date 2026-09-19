@@ -51,7 +51,7 @@ export default function Documentation({
           {[
             [
               "Add your providers",
-              "Search the provider directory to add API keys, sign in with OpenRouter, or connect a private 9router instance for subscription accounts.",
+              "Search the provider directory to add API keys or authorize supported accounts directly, then rank your preferred models.",
             ],
             [
               "Create a Gateway API key",
@@ -131,17 +131,17 @@ export default function Documentation({
       <section className="panel docs-steps">
         <h2>Subscription providers and limits</h2>
         <p className="muted">
-          For OpenRouter, choose Sign in with OpenRouter in the connection form.
-          For other subscription providers, authorize your accounts in your
-          private 9router dashboard, then connect its /v1 endpoint and gateway
-          API key here. A hosted gateway needs an endpoint it can reach;
-          localhost refers to the gateway server.
+          Choose a provider and use its sign-in option. OpenRouter returns you
+          here after authorization. Kimi Code, Kilo Code, GitHub Copilot, Codex,
+          and Grok Build use a one-time code. Open the provider page and approve
+          the connection; tokens stay encrypted on this server and renew
+          automatically when supported. No separate gateway is needed.
         </p>
         <p className="muted">
           Tokens &amp; limits shows observed rate windows and reset times.
           Supported credit balances are shown separately. Providers that do not
-          report quotas stay unknown. Subscription quota details remain in your
-          private 9router dashboard.
+          report quotas stay unknown. Account access and quota availability
+          depend on the provider.
         </p>
         <a
           className="text-button"
@@ -149,7 +149,7 @@ export default function Documentation({
           target="_blank"
           rel="noreferrer"
         >
-          Private 9router setup and provider guide <ExternalLink size={14} />
+          Native sign-in and model preferences guide <ExternalLink size={14} />
         </a>
       </section>
       <div className="two-columns docs-notes">

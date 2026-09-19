@@ -8,6 +8,7 @@ from .groq import GroqAdapter
 from .huggingface import HuggingFaceAdapter
 from .native_anthropic import NativeAnthropicAdapter
 from .openrouter import OpenRouterAdapter
+from .subscriptions import CodexAdapter, CopilotAdapter, GrokBuildAdapter, KiloAdapter, KimiAdapter
 from .together import TogetherAdapter
 
 ADAPTERS: dict[str, type[OpenAIAdapter]] = {
@@ -20,6 +21,11 @@ ADAPTERS: dict[str, type[OpenAIAdapter]] = {
         TogetherAdapter,
         FireworksAdapter,
         CustomAdapter,
+        KimiAdapter,
+        KiloAdapter,
+        CopilotAdapter,
+        CodexAdapter,
+        GrokBuildAdapter,
     )
 }
 for kind, entry in DIRECT.items():

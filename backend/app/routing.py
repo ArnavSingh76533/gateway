@@ -145,6 +145,12 @@ async def candidates(
         exact = model.model_id == mid
         if not automatic and not exact and not body.allow_alternatives:
             continue
+        if (
+            (automatic or not exact)
+            and provider.preferred_only
+            and model.model_id not in provider.preferred_models
+        ):
+            continue
         # Unknown metadata is permitted for an explicitly named model. Auto and alternatives require confirmation.
         if any(
             model.capabilities.get(cap) is False
@@ -170,18 +176,24 @@ async def candidates(
         )
         if c.provider.user_id != principal.user_id:
             price = 0
+        preferences = c.provider.preferred_models
+        rank = (
+            preferences.index(c.model.model_id)
+            if c.model.model_id in preferences
+            else len(preferences)
+        )
         base = (exact, not c.provider.pinned)
         if mode == "fastest":
-            return base + (c.latency, c.provider.priority, c.model.model_id)
+            return base + (c.latency, c.provider.priority, rank, c.model.model_id)
         if mode == "cheapest":
-            return base + (price, c.provider.priority, c.model.model_id)
+            return base + (price, c.provider.priority, rank, c.model.model_id)
         if mode == "coding":
             # A ranking hint, never a capability guarantee.
             coding = c.model.capabilities.get("coding") is True or any(
                 x in c.model.model_id.lower() for x in ("coder", "code", "codestral")
             )
-            return base + (not coding, c.provider.priority, c.latency, c.model.model_id)
-        return base + (c.provider.priority, c.latency, c.model.model_id)
+            return base + (not coding, c.provider.priority, rank, c.latency, c.model.model_id)
+        return base + (c.provider.priority, rank, c.latency, c.model.model_id)
 
     matches.sort(key=order)
     return [c for _, c in matches]

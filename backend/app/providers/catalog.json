@@ -99,9 +99,7 @@
     "key_url": "https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/OpenAI",
     "integration": "direct",
     "protocol": "azure",
-    "auth": [
-      "9router"
-    ],
+    "auth": [],
     "category": "apikey",
     "note": "Enter your resource URL ending in /openai/v1. Use a deployment name as the model ID."
   },
@@ -220,9 +218,7 @@
     "key_url": "https://dash.cloudflare.com/profile/api-tokens",
     "integration": "direct",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
+    "auth": [],
     "category": "freeTier",
     "note": "Enter https://api.cloudflare.com/client/v4/accounts/YOUR_ACCOUNT_ID/ai/v1."
   },
@@ -372,9 +368,7 @@
     "key_url": "https://huggingface.co/settings/tokens",
     "integration": "direct",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
+    "auth": [],
     "category": "apikey"
   },
   {
@@ -402,9 +396,7 @@
     "key_url": "https://jina.ai/?sui=apikey",
     "integration": "direct",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
+    "auth": [],
     "category": "apikey"
   },
   {
@@ -537,9 +529,7 @@
     "key_url": "https://ollama.com/settings/keys",
     "integration": "direct",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
+    "auth": [],
     "category": "freeTier"
   },
   {
@@ -552,9 +542,7 @@
     "key_url": "",
     "integration": "direct",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
+    "auth": [],
     "category": "apikey",
     "note": "Enter your server /v1 URL. Private hosts must be allowed by the gateway administrator."
   },
@@ -583,9 +571,7 @@
     "key_url": "",
     "integration": "direct",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
+    "auth": [],
     "category": "free"
   },
   {
@@ -651,7 +637,7 @@
   },
   {
     "id": "9router",
-    "name": "Private 9router",
+    "name": "Legacy compatible gateway",
     "symbol": "9R",
     "color": "#b4a0fa",
     "website": "https://github.com/decolua/9router",
@@ -659,11 +645,11 @@
     "category": "apikey",
     "protocol": "openai",
     "auth": [
-      "9router"
+      "api_key"
     ],
     "url": "",
     "integration": "direct",
-    "note": "Connect your private 9router /v1 endpoint and gateway API key. Authorize subscriptions in your own 9router dashboard; all of its published model routes are discovered here."
+    "note": "Optional existing OpenAI-compatible gateway connection. No bridge is needed for native provider sign-ins."
   },
   {
     "id": "recraft",
@@ -675,9 +661,7 @@
     "key_url": "https://www.recraft.ai/profile/api",
     "integration": "direct",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
+    "auth": [],
     "category": "apikey"
   },
   {
@@ -810,9 +794,7 @@
     "key_url": "https://dash.voyageai.com/api-keys",
     "integration": "direct",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
+    "auth": [],
     "category": "apikey"
   },
   {
@@ -828,7 +810,8 @@
     "auth": [
       "api_key"
     ],
-    "category": "oauth"
+    "category": "oauth",
+    "note": "Connect directly using your provider API key."
   },
   {
     "id": "xiaomi-mimo",
@@ -843,7 +826,8 @@
     "auth": [
       "api_key"
     ],
-    "category": "oauth"
+    "category": "oauth",
+    "note": "Connect directly using your provider API key."
   },
   {
     "id": "xiaomi-tokenplan",
@@ -868,12 +852,11 @@
     "url": "",
     "website": "https://antigravity.google",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "assemblyai",
@@ -883,12 +866,11 @@
     "url": "",
     "website": "https://assemblyai.com",
     "key_url": "https://www.assemblyai.com/app/api-keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "aws-polly",
@@ -898,12 +880,11 @@
     "url": "",
     "website": "https://aws.amazon.com/polly/",
     "key_url": "https://console.aws.amazon.com/iam/home#/security_credentials",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "black-forest-labs",
@@ -913,12 +894,11 @@
     "url": "",
     "website": "https://blackforestlabs.ai",
     "key_url": "https://api.bfl.ai",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "brave-search",
@@ -928,12 +908,11 @@
     "url": "",
     "website": "https://brave.com/search/api",
     "key_url": "https://api-dashboard.search.brave.com/app/keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "cartesia",
@@ -943,12 +922,11 @@
     "url": "",
     "website": "https://cartesia.ai",
     "key_url": "https://play.cartesia.ai/keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "claude",
@@ -958,12 +936,11 @@
     "url": "",
     "website": "https://claude.ai",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "anthropic",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "cline",
@@ -973,12 +950,11 @@
     "url": "",
     "website": "https://cline.bot",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "clinepass",
@@ -988,12 +964,11 @@
     "url": "",
     "website": "https://cline.bot",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "codebuddy-intl",
@@ -1003,12 +978,11 @@
     "url": "",
     "website": "https://www.codebuddy.ai",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "codebuddy-cn",
@@ -1018,12 +992,11 @@
     "url": "",
     "website": "https://copilot.tencent.com",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "comfyui",
@@ -1033,12 +1006,11 @@
     "url": "",
     "website": "https://github.com/comfyanonymous/ComfyUI",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "commandcode",
@@ -1048,12 +1020,11 @@
     "url": "",
     "website": "https://commandcode.ai",
     "key_url": "https://commandcode.ai/studio",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "coqui",
@@ -1063,12 +1034,11 @@
     "url": "",
     "website": "https://github.com/coqui-ai/TTS",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "freeTier"
+    "auth": [],
+    "category": "freeTier",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "cursor",
@@ -1078,12 +1048,11 @@
     "url": "",
     "website": "https://cursor.com",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "deepgram",
@@ -1093,12 +1062,11 @@
     "url": "",
     "website": "https://deepgram.com",
     "key_url": "https://console.deepgram.com/api-keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "edge-tts",
@@ -1108,12 +1076,11 @@
     "url": "",
     "website": "",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "freeTier"
+    "auth": [],
+    "category": "freeTier",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "elevenlabs",
@@ -1123,12 +1090,11 @@
     "url": "",
     "website": "https://elevenlabs.io",
     "key_url": "https://elevenlabs.io/app/settings/api-keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "exa",
@@ -1138,12 +1104,11 @@
     "url": "",
     "website": "https://exa.ai",
     "key_url": "https://dashboard.exa.ai/api-keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "fal-ai",
@@ -1153,12 +1118,11 @@
     "url": "",
     "website": "https://fal.ai",
     "key_url": "https://fal.ai/dashboard/keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "firecrawl",
@@ -1168,12 +1132,11 @@
     "url": "",
     "website": "https://firecrawl.dev",
     "key_url": "https://www.firecrawl.dev/app/api-keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "fish-audio",
@@ -1183,12 +1146,11 @@
     "url": "",
     "website": "https://fish.audio",
     "key_url": "https://fish.audio/app/api-keys/",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "gemini-cli",
@@ -1198,27 +1160,27 @@
     "url": "",
     "website": "https://github.com/google-gemini/gemini-cli",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "free"
+    "auth": [],
+    "category": "free",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "github",
     "name": "GitHub Copilot",
     "symbol": "GI",
     "color": "#333333",
-    "url": "",
+    "url": "https://api.githubcopilot.com",
     "website": "https://github.com/features/copilot",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "direct",
     "protocol": "openai",
     "auth": [
-      "9router"
+      "oauth"
     ],
-    "category": "oauth"
+    "category": "oauth",
+    "note": "Sign in directly from this gateway. Model access and limits depend on your provider account."
   },
   {
     "id": "gitlab",
@@ -1228,12 +1190,11 @@
     "url": "",
     "website": "https://gitlab.com",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "google-pse",
@@ -1243,12 +1204,11 @@
     "url": "",
     "website": "https://programmablesearchengine.google.com",
     "key_url": "https://programmablesearchengine.google.com/controlpanel/create",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "google-tts",
@@ -1258,27 +1218,27 @@
     "url": "",
     "website": "",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "freeTier"
+    "auth": [],
+    "category": "freeTier",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "grok-cli",
     "name": "Grok CLI (Grok Build)",
     "symbol": "GC",
     "color": "#1DA1F2",
-    "url": "",
+    "url": "https://cli-chat-proxy.grok.com/v1",
     "website": "https://x.ai",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "direct",
     "protocol": "openai",
     "auth": [
-      "9router"
+      "oauth"
     ],
-    "category": "oauth"
+    "category": "oauth",
+    "note": "Sign in directly from this gateway. Model access and limits depend on your provider account."
   },
   {
     "id": "grok-web",
@@ -1288,12 +1248,11 @@
     "url": "",
     "website": "https://grok.com",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "webCookie"
+    "auth": [],
+    "category": "webCookie",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "iflow",
@@ -1303,12 +1262,11 @@
     "url": "",
     "website": "https://iflow.cn",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "inworld",
@@ -1318,12 +1276,11 @@
     "url": "",
     "website": "https://inworld.ai",
     "key_url": "https://platform.inworld.ai/api-keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "jina-reader",
@@ -1333,27 +1290,28 @@
     "url": "",
     "website": "https://jina.ai/reader",
     "key_url": "https://jina.ai/?sui=apikey",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "kilocode",
     "name": "Kilo Code",
     "symbol": "KC",
     "color": "#FF6B35",
-    "url": "",
+    "url": "https://api.kilo.ai/api/gateway",
     "website": "https://kilocode.ai",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "direct",
     "protocol": "openai",
     "auth": [
-      "9router"
+      "oauth",
+      "api_key"
     ],
-    "category": "oauth"
+    "category": "oauth",
+    "note": "Sign in directly from this gateway. Model access and limits depend on your provider account."
   },
   {
     "id": "kimchi",
@@ -1363,27 +1321,28 @@
     "url": "",
     "website": "https://kimchi.dev",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "freeTier"
+    "auth": [],
+    "category": "freeTier",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "kimi",
     "name": "Kimi",
     "symbol": "KM",
     "color": "#1E3A8A",
-    "url": "",
+    "url": "https://api.kimi.com/coding/v1",
     "website": "https://kimi.moonshot.cn",
     "key_url": "https://platform.moonshot.ai/console/api-keys",
-    "integration": "bridge",
-    "protocol": "anthropic",
+    "integration": "direct",
+    "protocol": "openai",
     "auth": [
-      "9router"
+      "oauth",
+      "api_key"
     ],
-    "category": "oauth"
+    "category": "oauth",
+    "note": "Sign in directly from this gateway. Model access and limits depend on your provider account."
   },
   {
     "id": "kiro",
@@ -1393,12 +1352,11 @@
     "url": "",
     "website": "https://kiro.dev",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "free"
+    "auth": [],
+    "category": "free",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "linkup",
@@ -1408,12 +1366,11 @@
     "url": "",
     "website": "https://linkup.so",
     "key_url": "https://app.linkup.so/api-keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "local-device",
@@ -1423,12 +1380,11 @@
     "url": "",
     "website": "",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "freeTier"
+    "auth": [],
+    "category": "freeTier",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "mimo-free",
@@ -1438,12 +1394,11 @@
     "url": "",
     "website": "",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "free"
+    "auth": [],
+    "category": "free",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "mmf",
@@ -1453,12 +1408,11 @@
     "url": "",
     "website": "",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "nanobanana",
@@ -1468,12 +1422,11 @@
     "url": "",
     "website": "https://nanobananaapi.ai",
     "key_url": "https://nanobananaapi.ai/dashboard",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "ollama-search",
@@ -1483,27 +1436,27 @@
     "url": "",
     "website": "https://ollama.com",
     "key_url": "https://ollama.com/settings/keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "codex",
     "name": "OpenAI Codex",
     "symbol": "CO",
     "color": "#3B82F6",
-    "url": "",
+    "url": "https://chatgpt.com/backend-api/codex",
     "website": "https://chatgpt.com/codex",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "direct",
     "protocol": "openai",
     "auth": [
-      "9router"
+      "oauth"
     ],
-    "category": "oauth"
+    "category": "oauth",
+    "note": "Sign in directly from this gateway. Model access and limits depend on your provider account."
   },
   {
     "id": "perplexity-agent",
@@ -1513,12 +1466,11 @@
     "url": "",
     "website": "https://www.perplexity.ai",
     "key_url": "https://www.perplexity.ai/settings/api",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "perplexity-web",
@@ -1528,12 +1480,11 @@
     "url": "",
     "website": "https://www.perplexity.ai",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "webCookie"
+    "auth": [],
+    "category": "webCookie",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "playht",
@@ -1543,12 +1494,11 @@
     "url": "",
     "website": "https://play.ht",
     "key_url": "https://play.ht/studio/api-access",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "qoder",
@@ -1558,12 +1508,11 @@
     "url": "",
     "website": "https://qoder.com",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "runwayml",
@@ -1573,12 +1522,11 @@
     "url": "",
     "website": "https://runwayml.com",
     "key_url": "https://dev.runwayml.com",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "sdwebui",
@@ -1588,12 +1536,11 @@
     "url": "",
     "website": "https://github.com/AUTOMATIC1111/stable-diffusion-webui",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "searchapi",
@@ -1603,12 +1550,11 @@
     "url": "",
     "website": "https://www.searchapi.io",
     "key_url": "https://www.searchapi.io/dashboard",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "searxng",
@@ -1618,12 +1564,11 @@
     "url": "",
     "website": "https://docs.searxng.org",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "freeTier"
+    "auth": [],
+    "category": "freeTier",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "selfhosted-embedding",
@@ -1633,12 +1578,11 @@
     "url": "",
     "website": "https://github.com/ggml-org/llama.cpp",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "selfhosted-stt",
@@ -1648,12 +1592,11 @@
     "url": "",
     "website": "https://github.com/ggml-org/whisper.cpp",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "selfhosted-tts",
@@ -1663,12 +1606,11 @@
     "url": "",
     "website": "https://github.com/remsky/Kokoro-FastAPI",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "serper",
@@ -1678,12 +1620,11 @@
     "url": "",
     "website": "https://serper.dev",
     "key_url": "https://serper.dev/api-key",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "stability-ai",
@@ -1693,12 +1634,11 @@
     "url": "",
     "website": "https://stability.ai",
     "key_url": "https://platform.stability.ai/account/keys",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "tavily",
@@ -1708,12 +1648,11 @@
     "url": "",
     "website": "https://tavily.com",
     "key_url": "https://app.tavily.com/home",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "topaz",
@@ -1723,12 +1662,11 @@
     "url": "",
     "website": "https://topazlabs.com",
     "key_url": "https://topazlabs.com/account",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "tortoise",
@@ -1738,12 +1676,11 @@
     "url": "",
     "website": "https://github.com/neonbjb/tortoise-tts",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "freeTier"
+    "auth": [],
+    "category": "freeTier",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "vertex",
@@ -1753,12 +1690,11 @@
     "url": "",
     "website": "https://cloud.google.com/vertex-ai",
     "key_url": "https://console.cloud.google.com/iam-admin/serviceaccounts",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "freeTier"
+    "auth": [],
+    "category": "freeTier",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "vertex-partner",
@@ -1768,12 +1704,11 @@
     "url": "",
     "website": "https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-partner-models",
     "key_url": "https://console.cloud.google.com/iam-admin/serviceaccounts",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "xquik",
@@ -1783,12 +1718,11 @@
     "url": "",
     "website": "https://docs.xquik.com/api-reference/x/search-tweets",
     "key_url": "https://xquik.com",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "youcom",
@@ -1798,12 +1732,11 @@
     "url": "",
     "website": "https://you.com",
     "key_url": "https://api.you.com",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "apikey"
+    "auth": [],
+    "category": "apikey",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   },
   {
     "id": "zed",
@@ -1813,11 +1746,10 @@
     "url": "",
     "website": "https://zed.dev",
     "key_url": "",
-    "integration": "bridge",
+    "integration": "unavailable",
     "protocol": "openai",
-    "auth": [
-      "9router"
-    ],
-    "category": "oauth"
+    "auth": [],
+    "category": "oauth",
+    "note": "This provider uses a desktop-specific or unsupported protocol. Native sign-in is not implemented here yet. Use its official API through a supported connector if available."
   }
 ]

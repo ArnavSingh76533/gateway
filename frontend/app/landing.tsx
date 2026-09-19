@@ -26,7 +26,7 @@ export default function Landing({
   onSignIn: () => void;
 }) {
   const direct = providerDirectory.filter(
-    (p) => p.integration === "direct",
+    (p) => p.integration === "direct" && p.id !== "9router",
   ).length;
   return (
     <div className="landing" data-accent={site.accent}>
@@ -36,7 +36,9 @@ export default function Landing({
       <header className="landing-nav">
         <a className="brand" href="#home">
           <span className="brand-mark">{site.site_name.slice(0, 1)}</span>
-          <span className="landing-brand-name">{site.site_name.toLowerCase()}</span>
+          <span className="landing-brand-name">
+            {site.site_name.toLowerCase()}
+          </span>
           <span className="brand-period">.</span>
         </a>
         <nav aria-label="Site navigation">
@@ -151,7 +153,7 @@ export default function Landing({
               </div>
               <div>
                 <Waypoints size={24} />
-                <strong>Private 9router</strong>
+                <strong>Your accounts</strong>
                 <small>Subscriptions</small>
               </div>
             </div>
@@ -199,7 +201,7 @@ export default function Landing({
               </span>
               <h3>Bring your API keys</h3>
               <p>
-                {direct} direct connectors, plus custom OpenAI-compatible
+                {direct} connection types, including custom OpenAI-compatible
                 endpoints. Discover models and find them in a searchable
                 playground.
               </p>
@@ -213,8 +215,8 @@ export default function Landing({
               </span>
               <h3>Connect your subscriptions</h3>
               <p>
-                Sign in with OpenRouter, or connect a private 9router instance
-                for supported subscription accounts and their models.
+                Authorize supported provider accounts directly in your gateway.
+                Your models and API keys, together in one workspace.
               </p>
               <a href="#providers">
                 Find your connection <ArrowRight size={15} />
@@ -294,7 +296,7 @@ export default function Landing({
               {
                 n: "01",
                 title: "Connect a provider",
-                copy: "Add an API key, use OpenRouter sign-in, or link your private 9router.",
+                copy: "Add an API key or securely link a supported provider account.",
               },
               {
                 n: "02",

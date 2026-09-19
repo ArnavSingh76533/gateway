@@ -27,6 +27,13 @@ def adapter_for(state: Any, provider: Provider) -> OpenAIAdapter:
 
         await capture(state, provider.id, adapter.quota_model, headers)
 
+    if adapter.credentials.get("auth_type") == "oauth":
+        from .native_auth import credentials_for
+
+        async def load_credentials() -> dict:
+            return await credentials_for(state, provider.id)
+
+        adapter.credentials_loader = load_credentials
     adapter.on_headers = report
     return adapter
 

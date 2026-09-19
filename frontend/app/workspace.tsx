@@ -1017,6 +1017,27 @@ export default function Dashboard() {
                         <ProviderStatus p={provider} />
                       </div>
                     </div>
+                    {!!provider.preferred_models?.length && (
+                      <div className="connection-preferences">
+                        <small>
+                          {provider.preferred_only
+                            ? "Automatic routing limited to"
+                            : "Preferred model order"}
+                        </small>
+                        <ol>
+                          {provider.preferred_models.slice(0, 3).map((mid) => (
+                            <li className="mono" key={mid}>
+                              {mid}
+                            </li>
+                          ))}
+                        </ol>
+                        {provider.preferred_models.length > 3 && (
+                          <small>
+                            +{provider.preferred_models.length - 3} more
+                          </small>
+                        )}
+                      </div>
+                    )}
                     {provider.discovery_error && (
                       <Banner tone="error">{provider.discovery_error}</Banner>
                     )}
@@ -1112,10 +1133,15 @@ export default function Dashboard() {
                     Same simple connection.
                   </p>
                   <div className="provider-symbols">
-                    {["openrouter", "groq", "google", "anthropic", "nvidia"]
-                      .map((kind) => (
-                        <ProviderIcon key={kind} kind={kind} small />
-                      ))}
+                    {[
+                      "openrouter",
+                      "groq",
+                      "google",
+                      "anthropic",
+                      "nvidia",
+                    ].map((kind) => (
+                      <ProviderIcon key={kind} kind={kind} small />
+                    ))}
                   </div>
                 </button>
               </div>

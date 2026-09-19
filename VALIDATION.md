@@ -1,38 +1,28 @@
 # Delivery validation
 
-Prepared 12 September 2026.
+Updated 19 September 2026 for native account connections and model preferences.
 
-## Passed in this environment
+## Current local checks
 
 | Check | Result |
-|---|---|
-| Backend automated tests | **56 passed** |
-| Backend lint | Ruff: all checks passed |
-| Backend typing | Mypy: no issues in 23 source files |
-| Frontend production build | Next.js 16.3.5 build and TypeScript check passed |
-| Node SDK build | TypeScript declaration and JavaScript build passed |
-| Official Python OpenAI SDK | Model listing, non-streaming chat and streaming exercised against the gateway |
-| Anthropic Messages bridge | Text, tool conversion, SSE, unsupported thinking rejection and disclosed token estimate tested |
-| SQLite migration | Alembic upgrade succeeded; schema check reported no pending differences |
-| Dashboard HTTP smoke | FastAPI served the compiled dashboard and its referenced static assets successfully |
-| API documentation | OpenAPI schema generated at `docs/openapi.json` with authentication schemes |
-| Deployment configuration syntax | Compose, Render and CI YAML parsed successfully |
+| --- | --- |
+| Backend automated tests | **98 passed** |
+| Frontend automated tests | **64 passed** |
+| Backend lint and typing | Ruff passes; mypy reports no issues in 35 source files |
+| Production frontend | Next.js build and TypeScript check pass |
+| SQLite migration | Upgrade to `c3101d` succeeds |
+| Native authorization initiation | Copilot, Codex, Kimi, Kilo, and Grok Build public initiation endpoints each returned HTTP 200 |
+| Chrome interaction | Searched a 1,205-model catalog, found its last free model, added/reordered preferences, saved the restriction, and streamed an automatic request through preferred model 1 |
+| UI review | Corrected search and checkbox alignment in the preferences editor; retained the existing landing design |
 
-Tests use HTTPx ASGI/Mock transports, temporary SQLite databases, generated test secrets and fixture provider responses. No real credentials or production traffic were used.
+Tests cover authorization session/user binding, CSRF, expiry, cancellation, polling backoff, idempotent completion, encrypted credential storage, serialized refresh rotation, preference fallback and exact-route behavior, streaming/tool translation, malformed upstream responses, stream closure, quota units and unknown values. Existing tenancy, routing, credentials, administration and shared-model tests also pass.
 
-Security tests cover user isolation, credential encryption, no credential readback, revocation, Origin/CSRF checks, error redaction, request-size caps, private/mixed DNS rejection, forbidden headers, key rotation and concurrent development rate limiting. Routing tests cover retryable status codes, exact model matching, provider pins, alternative-model opt-in, fastest/cheapest selection, skipped unhealthy candidates, JSON/tools/vision passthrough, streamed usage, pre-output fallback, post-output failure without retry and upstream stream closure.
+## Scope of the evidence
 
-## Not executed here
+Local browser inference and automated authorization exchanges use controlled upstream fixtures. The five real provider checks only initiated authorization: no subscription account was authorized and no paid inference was performed. Live authenticated inference, discovery, and quotas for every subscription still require testing with eligible provider accounts. Public client protocols and account access can change independently of this gateway.
 
-- **Docker image build or container boot:** no Docker runtime is available in this environment. A CI job is included to build the image and smoke-test its rootless embedded PostgreSQL/Redis setup.
-- **Live PostgreSQL/Redis integration:** tests ran against SQLite and the development state backend; Redis atomic operations and PostgreSQL schema/migration code are included but not service-tested here.
-- **Live provider inference/discovery:** no user provider credentials were supplied. Provider wire formats are implemented from primary documentation and tested with fixtures; account access, quotas, current native model IDs and provider-specific parameter limitations still need live confirmation.
-- **Hugging Face/Railway/Render/Fly deployment:** no hosting account was provisioned or deployed. Configuration and instructions are supplied.
-- **Browser/device visual or interaction testing:** frontend production compilation and HTTP asset checks passed, but no browser-level screenshots, accessibility audit or cross-device session was run.
-- **Independent security audit, load/soak test, failover/recovery drill, or live certification of every named agent.**
+No local Docker runtime is available. GitHub CI builds the image, starts embedded PostgreSQL/Redis, applies migrations and verifies administrator activation. Its result is reported in the pull request checks.
 
-This report distinguishes implemented code from verified runtime behavior. Treat the project as a production-oriented initial release; validate live credentials, Docker startup, persistence and backups on your target before relying on it for unattended workloads.
+Earlier gateway releases were deployed to Hugging Face. The native-connections release is deployed separately from merging code. The current Space uses ephemeral PostgreSQL; its manual workflow requires a backup or explicit acceptance of losing the current data before deployment. The seeded administrator can be recreated, but that does not preserve other users, provider credentials or history.
 
-## Included build outputs
-
-`frontend/out` is included so the read-only demo can be served immediately. `sdk/node/dist` is included with the SDK source. Runtime dependencies, environment secrets, virtual environments, databases, node_modules, caches and local build intermediates are excluded from the archive. Rebuilds are described in README.md.
+The directory marks unimplemented account protocols unavailable. This is not complete 9router parity or provider certification. No independent security audit, load/soak test, or failover/recovery drill is claimed.

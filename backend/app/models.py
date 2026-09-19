@@ -83,6 +83,8 @@ class Provider(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     priority: Mapped[int] = mapped_column(Integer, default=10)
     pinned: Mapped[bool] = mapped_column(Boolean, default=False)
+    preferred_models: Mapped[list[str]] = mapped_column(JSON, default=list)
+    preferred_only: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
     discovered_at: Mapped[float | None] = mapped_column(Float)
     discovery_error: Mapped[str | None] = mapped_column(String(160))

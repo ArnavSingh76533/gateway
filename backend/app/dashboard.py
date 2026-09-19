@@ -52,18 +52,25 @@ async def providers(request: Request, db: DB, user: CurrentUser) -> list[dict]:
     for p, count in rows:
         item = public(
             p,
-            "id kind name base_url enabled priority pinned created_at discovered_at discovery_error",
+            "id kind name base_url enabled priority pinned preferred_models preferred_only created_at discovered_at discovery_error",
         )
         item["models_count"] = count
         item["health"] = await request.app.state.shared.health(p.id)
         # Provider-level health is supplemented by the model-level routing health in /api/models.
         item["has_credentials"] = True
+        item["auth_type"] = request.app.state.vault.open(p.encrypted_credentials).get(
+            "auth_type", "api_key"
+        )
         result.append(item)
     return result
 
 
 @router.post("/providers", status_code=201)
 async def create_provider(body: ProviderInput, request: Request, db: DB, user: CurrentUser) -> dict:
+    if body.kind in {"github", "codex", "grok-cli"}:
+        raise fail(422, "Use this provider’s native sign-in flow.")
+    if body.preferred_only and not body.preferred_models:
+        raise fail(422, "Choose at least one preferred model before limiting automatic routing.")
     if body.kind not in {"custom", "ollama-local"} and not body.api_key:
         raise fail(422, "An API key is required for this provider.")
     url = validate_base_url(
@@ -82,6 +89,8 @@ async def create_provider(body: ProviderInput, request: Request, db: DB, user: C
         base_url=url,
         enabled=body.enabled,
         priority=body.priority,
+        preferred_models=body.preferred_models,
+        preferred_only=body.preferred_only,
         encrypted_credentials=request.app.state.vault.seal(
             {"api_key": body.api_key, "headers": validate_headers(body.headers)}
         ),
@@ -122,6 +131,11 @@ async def patch_provider(
     data = body.model_dump(exclude_unset=True, exclude_none=True)
     if "api_key" in data or "headers" in data:
         creds = request.app.state.vault.open(p.encrypted_credentials)
+        if creds.get("auth_type") == "oauth":
+            raise fail(
+                422,
+                "OAuth credentials are managed automatically. Reconnect the account to replace them.",
+            )
         if body.api_key is not None:
             if not body.api_key and p.kind not in {"custom", "ollama-local"}:
                 raise fail(422, "API key cannot be empty.")
@@ -133,10 +147,13 @@ async def patch_provider(
         await request.app.state.shared.delete("discovery:" + p.id)
         await request.app.state.shared.delete("quota:" + p.id)
         await request.app.state.shared.delete("balance:" + p.id)
+        await request.app.state.shared.delete("account-quota:" + p.id)
         p.discovered_at = None
-    for key in ("name", "enabled", "priority", "pinned"):
+    for key in ("name", "enabled", "priority", "pinned", "preferred_models", "preferred_only"):
         if key in data:
             setattr(p, key, data[key])
+    if p.preferred_only and not p.preferred_models:
+        raise fail(422, "Choose at least one preferred model before limiting automatic routing.")
     db.add(AuditLog(user_id=user.id, action="provider.updated", target_id=p.id))
     try:
         await db.commit()
